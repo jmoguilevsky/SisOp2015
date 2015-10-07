@@ -1,0 +1,33 @@
+1.Requisitos de la instalación
+	
+	-Contar con el comando tar para la descompresion del trabajo
+	-Contar con Bash versión 3 o superior.
+	-Contar con Perl versión 5 o superior.
+	-Contar con un espacio suficiente para almacenar los archivos del programa en el disco
+
+2. Descompresión
+
+	-Ubicarse en la carpeta donde se desea trabajar (esta carpeta de ahora en más será indicada como $grupo)
+	-Ejecutar en la consola $tar -zxf grupo10.tar.gz
+
+3. Instalación
+	
+	1-Dar permisos para el instaldor mediante el comando $chmod +x AFINSTAL.sh , luego iniciar el instalador: $./AFINSTAL.sh
+	2-Primero se detecta si hay alguna instalación hecha, de ser asi se la completa, sino:
+	3-Se procede a elegir todos los directorios de trabajo y valores del programa.
+	  Entre parentesis se encuentra el valor por default, el cual se elige al apretar enter
+	4-Una vez elegidos, si se confirma la instalación, se procede a copiar todos los archivos en sus respectivos directorios.
+	5-Por último, al finalizar la instalación se guarda un log de esta y un archivo de configuración.
+
+4. Resultados de la instalación
+
+	Una vez completada la instalación, tendremos en el directorio los siguientes elementos:
+	-Directorios especificados por el usuario (con sus correspondientes subdirectorios)
+	-Los archivos maestros y tablas se habrán copiado en el directorio especificado como MAEDIR
+	-Los scripts ejecutables se habrán copiado en el directorio especificado como BINDIR
+	-Se habrá guardada un log de la instalación y un archivo de configuración con toda la información de esta.
+
+5. Ejecución del programa
+
+	Continuar en el readme de iniciación
+	
