@@ -1,0 +1,24 @@
+#!/bin/bash
+ACEPDIR=Acepdir
+LLAMADAS_ACEPTADAS=$(ls -t $ACEPDIR/)
+CODIGOS_PAIS=$MAEDIR/CdP.mae
+CODIGOS_AREA=$MAEDIR/CdA.mae
+CENTRALES=$MAEDIR/CdC.mae
+AGENTES=$MAEDIR/agentes.mae
+TIPOS_LLAMADAS=$MAEDIR/tllama.tab
+UMBRALES=$MAEDIR/umbral.tab
+
+DIR_LLAMADAS_SOSPECHOSAS=$PROCDIR
+DIR_ARCHIVOS_PROCESADOS=$PROCDIR/proc
+DIR_LLAMADAS_RECHAZADAS=$RECHDIR/llamadas/
+RECH_EXT=".rech"
+LOGCOM="AFUMB"
+
+#GraLog $LOGCOM "Inicio de AFUMB" INFO 
+#GraLog $LOGCOM "Cantidad de archivos a procesar: $(ls $ACEPDIR/ | wc -l)" INFO
+
+for i in $LLAMADAS_ACEPTADAS; do
+	MoverA $ACEPDIR/$i $DIR_ARCHIVOS_PROCESADOS
+	while IFS='' read -r line || [[ -n "$line" ]]; do
+	done < $ACEPDIR/$i
+done
