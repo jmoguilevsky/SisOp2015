@@ -1,0 +1,25 @@
+#!/bin/bash
+#Parametro 1: funcion a arrancar en BACKGROUND.
+#Parametro 2: opcional: funcion que llamo a Arrancar (si es que graba en Log).
+INICIALIZACION=true
+if [ $INICIALIZACION != true ]; then
+	#GraLog Arrancar "Error: la inicializacion no fue completada." ERROR
+	exit 3
+fi
+ID=$(pidof -x "$1")
+if [ -z "$ID" ]; then
+	./"$1"&
+	#gnome-terminal -e . "$1"&      si es que lo quiero en otra terminal (testear)
+	MSG="El proceso $1 no estaba corriendo, se puso en marcha con ID $! en background."
+	TIPO=INFO
+	#GraLog Arrancar "$MSG" $TIPO
+else
+	MSG="El proceso $1 ya estaba corriendo, con ID $ID."
+	TIPO=WAR
+fi
+if [ ! -z "$2" ]; then
+	# GraLog Arrancar "$MSG" $TIPO
+	echo "Logenado."
+else
+	echo "$MSG"
+fi

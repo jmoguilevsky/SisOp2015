@@ -1,0 +1,52 @@
+#!/bin/bash
+#Funcion que copia el archivo (parametro 1) a la carpeta (parametro 2).
+#El tercer parametro opcional contiene el nombre de la funcion que llamo a MoverA.
+#Si ya existe el archivo en el destino, crea carpeta de duplicados (si no existe) y lo pone alli.
+if [ ! -f "$1" ]; then
+	echo "Archivo de origen no existe."
+	return 107
+fi
+
+if [ ! -d "$2" ]; then
+	echo "Direccion de destino invalida."
+	return 107
+fi
+
+INICIALIZACION=true
+if [ $INICIALIZACION != true ]; then
+	#GraLog Arrancar "Error: la inicializacion no fue completada." ERROR
+	exit 3
+fi
+
+ARCHIVO=$1
+NOMBRE_BASE=${ARCHIVO##*/}
+#Veo si ya existe el archivo en el destino:
+if [ -f "$2/$NOMBRE_BASE" ]; then
+	#Creo la carpeta de duplicados si no esta creada:
+	mkdir -p $2/duplicados
+	NUEVO_PATH="$2/duplicados/$NOMBRE_BASE"
+	#Veo si el archivo ya existe en duplicados:
+	if [ -f $NUEVO_PATH ]; then
+		#Lo copio en duplicados con el sufijo .nnn
+		CANTIDAD=$(ls -l $NUEVO_PATH* | wc -l)
+		mv $1 "$NUEVO_PATH.$CANTIDAD"
+		if [ ! -z "$3" ]; then
+			# GraLog MoverA "El archivo $1 ya existia en la carpeta $2 y en duplicados. Se lo guardo con .$CANTIDAD" WAR
+			echo "El archivo $1 ya existia en la carpeta $2 y en duplicados. Se lo guarda alli con el sufijo .$CANTIDAD"
+		fi
+	else
+		#Lo copio en duplicados con su nombre original
+		mv $1 $NUEVO_PATH
+		if [ ! -z "$3" ]; then
+			# GraLog MoverA "No existe en duplicados, se guarda alli con su nombre original." WAR
+			echo "El archivo $1 ya existia en $2, pero no en duplicados, se guarda alli con su nombre original."
+		fi
+	fi
+else
+	#El archivo no existia, lo muevo normalmente
+	mv $1 $2
+	if [ ! -z "$3" ]; then
+		# GraLog MoverA "Archivo movido con exito." INFO
+		echo "Archivo movido con exito."
+	fi
+fi

@@ -1,0 +1,22 @@
+#!/bin/bash
+#Parametro 1: funcion a detener.
+#Parametro 2: opcional: funcion que llamo a Detener (si es que graba en Log).
+INICIALIZACION=true
+if [ $INICIALIZACION != true ]; then
+	#GraLog Arrancar "Error: la inicializacion no fue completada." ERROR
+	exit 3
+fi
+ID=$(pidof -x "$1")
+if [ -z "$ID" ]; then
+	MSG="El proceso $1 no estaba corriendo, nada que detener."
+	TIPO=WAR
+	#GraLog Arrancar "$MSG" $TIPO
+else
+	MSG="El proceso $1 estaba corriendo, fue detenido."
+	killall "$1"
+	TIPO=INFO
+fi
+if [ ! -z "$2" ]; then
+	# GraLog Arrancar "$MSG" $TIPO
+fi
+echo "$MSG"
