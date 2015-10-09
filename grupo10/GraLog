@@ -8,6 +8,11 @@ ERR="ERR"
 CURRENT=$(date -u '+%F%T')
 LOGSTART=$CURRENT' '$USER' '$1
 
+if [ "$1" = "AFINSTAL.sh" -o "$1" = "AFINSTAL" ]
+then
+	LOGARCHIVE="$PWD/conf/AFINSTAL.log"
+fi
+
 touch $LOGARCHIVE
 
 CURRENTSIZE=$(du $LOGARCHIVE | cut -f1)
