@@ -4,12 +4,12 @@
 #Si ya existe el archivo en el destino, crea carpeta de duplicados (si no existe) y lo pone alli.
 if [ ! -f "$1" ]; then
 	echo "Archivo de origen no existe."
-	return 107
+	exit 107
 fi
 
 if [ ! -d "$2" ]; then
 	echo "Direccion de destino invalida."
-	return 107
+	exit 107
 fi
 
 INICIALIZACION=true
