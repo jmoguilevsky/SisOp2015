@@ -13,27 +13,26 @@ touch $LOGARCHIVE
 CURRENTSIZE=$(du $LOGARCHIVE | cut -f1)
 MAXSIZE=$(($LOGSIZE * 1024))
 
-if [[ $CURRENTSIZE -gt $MAXSIZE ]]; then
-	$(sed -i '1,5000 d' $LOGARCHIVE)
-fi
-
-
 if [[ $# -gt 2 ]]; then
-	#echo $WAR $2 >> $LOGARCHIVE
-	if [[ $3 = $WAR ]]; then
-		LOGVALUE=$LOGSTART' '$WAR' '$2
-		echo "WARNING:" $LOGVALUE >> $LOGARCHIVE
-	elif [[ $3 = $ERR ]]; then
-		LOGVALUE=$LOGSTART' '$ERR' '$2
-		echo "ERROR:" $LOGVALUE >> $LOGARCHIVE
-	elif [[ $3 = $INFO ]]; then
-		LOGVALUE=$LOGSTART' '$INFO' '$2
-		echo "INFORMATIVO:" $LOGVALUE >> $LOGARCHIVE
-	else
-		LOGVALUE=$LOGSTART' '$INFO' '$2
-		echo "WARNING: El tercer parámetro no corresponde a una opción válida">> $LOGARCHIVE
-		echo "INFORMATIVO:" $LOGVALUE >> $LOGARCHIVE
+	if [[ $CURRENTSIZE -gt $MAXSIZE ]]; then
+		$(sed -i '1,5000 d' $LOGARCHIVE)
+	fi
+	if [[ $# -gt 2 ]]; then
+		#echo $WAR $2 >> $LOGARCHIVE
+		if [[ $3 = $WAR ]]; then
+			LOGVALUE=$LOGSTART' '$WAR' '$2
+			echo "WARNING:" $LOGVALUE >> $LOGARCHIVE
+		elif [[ $3 = $ERR ]]; then
+			LOGVALUE=$LOGSTART' '$ERR' '$2
+			echo "ERROR:" $LOGVALUE >> $LOGARCHIVE
+		elif [[ $3 = $INFO ]]; then
+			LOGVALUE=$LOGSTART' '$INFO' '$2
+			echo "INFORMATIVO:" $LOGVALUE >> $LOGARCHIVE
+		else
+			LOGVALUE=$LOGSTART' '$INFO' '$2
+			echo "WARNING: El tercer parámetro no corresponde a una opción válida">> $LOGARCHIVE
+			echo "INFORMATIVO:" $LOGVALUE >> $LOGARCHIVE
+		fi
 	fi
 fi
-
 #echo $@ >> $LOGARCHIVE
