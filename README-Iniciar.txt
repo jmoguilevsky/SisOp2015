@@ -8,12 +8,14 @@ Si se desea reinstalar es necesario eliminar la carpeta conf/ y volver a correr 
 con el instalador o cualquier otro archivo.
 
 Utilización de funciones:
--Arrancar arg1 
+-Arrancar arg1 arg2
 	Objetivo: disparar procesos background por nombre
-	Parametros: arg1= Nombre del proceso
+	Parametros: arg1= funcion a arrancar en BACKGROUND.
+				arg2= opcional: funcion que llamo a Arrancar (si es que graba en Log).
 	Ejemplo: Arrancar "AFREC"
 
--Detener arg1 			
+-Detener arg1 arg2		
 	Objetivo: detener procesos, complementaria al Arrancar
-	Parametros: idem Arrancar
-	Ejemplo: Detener AFREC
+	Parametros: arg1=funcion a detener.
+				arg2=opcional: funcion que llamo a Detener (si es que graba en Log).
+	Ejemplo: Detener "AFREC"

@@ -4,9 +4,6 @@
 #~	0: Se ejecuto correctamente el comando AFINI.
 #~ -1: La instalacion no se realizo correctamente.
 
-
-
-
 #~ Obtiene la ruta en donde se encuentra el archivo AFINI.
 SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -15,16 +12,11 @@ SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CONFIGFILE=`find / -name "AFINSTAL.cnfg" 2>/dev/null`
 CONFDIR="$(dirname $CONFIGFILE)"
 
-
-# Importamos la funcion functions 
-source "$SCRIPT_DIRECTORY/functions"
-
 #~ Se le da permiso de ejecucion a GraLog si no lo tiene y se logea el inicio
 
-
 logearInicioEjecucion() {
-	if [ ! -x functions ] ; then
-		chmod u+x functions
+	if [ ! -x GraLog ] ; then
+		chmod u+x GraLog
 	fi
 	GraLog AFINI "Comando Inicio de Ejecución"
 	echo "Comando AFINI Inicio de Ejecución" 
@@ -40,7 +32,7 @@ logearFinEjecucion() {
 #~ Se logea un mensaje indicando que el archivo recibido no existe.
 logearArchivoFaltante() {
 	echo "No se ha encontrado el archivo $@"
-	GraLog AFINI "E" "No se ha encontrado el archivo $@"
+	GraLog AFINI "No se ha encontrado el archivo $@" "ERR"
 }
 
 clearScreen(){
@@ -154,9 +146,19 @@ verificarInstalacion() {
 		logearArchivoFaltante "/AFREC"
 	fi
 	
-	if [ ! -f functions ] ; then
+	if [ ! -f MoverA ] ; then
 		INSTALACION_CORRECTA=false
-		logearArchivoFaltante "/functions"
+		logearArchivoFaltante "/MoverA"
+	fi
+	
+	if [ ! -f Arrancar ] ; then
+		INSTALACION_CORRECTA=false
+		logearArchivoFaltante "/Arrancar"
+	fi
+	
+	if [ ! -f Detener ] ; then
+		INSTALACION_CORRECTA=false
+		logearArchivoFaltante "/Detener"
 	fi
 	
 	if [ ! -f AFLIST ] ; then
@@ -175,7 +177,7 @@ verificarInstalacion() {
 
 #~ Se logea un mensaje indicando que la instalacion no se encuentra completa.
 logearInstalacionIncompleta() {
-	GraLog AFINI "E" "La instalacion esta incompleta. Para solucionar el problema debe correr el comando AFINSTAL"
+	GraLog AFINI "La instalacion esta incompleta. Para solucionar el problema debe correr el comando AFINSTAL" "ERR"
 	echo "La instalacion esta incompleta. Para solucionar el problema debe correr el comando AFINSTAL"
 }
 
@@ -186,7 +188,7 @@ logearInstalacionCompleta() {
 
 #~ Se logea un mensaje indicando que el comando recibido no cuenta con suficientes permisos para ser ejecutado.
 logearPermisoIncorrecto() {
-	GraLog AFINI "E" "El siguiente comando no cuenta con suficientes permisos para ser ejecutado $@"
+	GraLog AFINI "El siguiente comando no cuenta con suficientes permisos para ser ejecutado $@" "ERR"
 }
 
 #~ Se logea un mensaje indicando que se modificaron los permisos del archivo recibido.
@@ -199,9 +201,24 @@ verificarPermisos() {
 	
 	local PERMISOS_CORRECTOS=true
 	
-	if [ ! -x functions ] ; then
+	if [ ! -x GraLog ] ; then
 		PERMISOS_CORRECTOS=false
-		logearPermisoIncorrecto "/functions"
+		logearPermisoIncorrecto "/GraLog"
+	fi
+	
+	if [ ! -x MoverA ] ; then
+		PERMISOS_CORRECTOS=false
+		logearPermisoIncorrecto "/MoverA"
+	fi
+	
+	if [ ! -x Detener ] ; then
+		PERMISOS_CORRECTOS=false
+		logearPermisoIncorrecto "/Detener"
+	fi
+	
+	if [ ! -x Arrancar ] ; then
+		PERMISOS_CORRECTOS=false
+		logearPermisoIncorrecto "/Arrancar"
 	fi
 	
 	if [ ! -x AFLIST ] ; then
@@ -225,11 +242,26 @@ verificarPermisos() {
 #~ Setea los permisos de ejecucion para los comandos del sistema.
 setearPermisos() {
 	
-	if [ ! -x functions ] ; then
-		logearCambioPermiso "/functions"
-		chmod u+x $SCRIPT_DIRECTORY/functions
+	if [ ! -x GraLog ] ; then
+		logearCambioPermiso "/GraLog"
+		chmod u+x $SCRIPT_DIRECTORY/GraLog
 	fi
-
+	
+	if [ ! -x MoverA ] ; then
+		logearCambioPermiso "/MoverA"
+		chmod u+x $SCRIPT_DIRECTORY/MoverA
+	fi
+	
+	if [ ! -x Arrancar ] ; then
+		logearCambioPermiso "/Arrancar"
+		chmod u+x $SCRIPT_DIRECTORY/Arrancar
+	fi
+	
+	if [ ! -x Detener ] ; then
+		logearCambioPermiso "/Detener"
+		chmod u+x $SCRIPT_DIRECTORY/Detener
+	fi
+	
 	if [ ! -x AFLIST ] ; then
 		logearCambioPermiso "/AFLIST"
 		chmod u+x $SCRIPT_DIRECTORY/AFLIST
@@ -249,7 +281,7 @@ setearPermisos() {
 
 #~ Se logea un mensaje indicando que los permisos de ejecucion son incorrectos.
 logearPermisosIncorrectos() {
-	GraLog AFINI "E" "Los comandos necesarios para la ejecucion del programa no cuentan con permisos suficientes."
+	GraLog AFINI "Los comandos necesarios para la ejecucion del programa no cuentan con permisos suficientes." "ERR"
 }
 
 #~ Se logea un mensaje indicando que los permisos de ejecucion son correctos.
@@ -321,7 +353,7 @@ mostrarEstadoSistema() {
 	mostrarArchivosDirectorio $SCRIPT_DIRECTORY/*
 
 	echo "Directorio de Maestros y Tablas: $MAEDIR"
-	mostrarArchivosDirectorio $MAEDIR
+	mostrarArchivosDirectorio $MAEDIR/*
 	
 	echo "Directorio de recepción de archivos de llamadas: $NOVEDIR"
 	
