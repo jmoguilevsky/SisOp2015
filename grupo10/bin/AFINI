@@ -9,7 +9,7 @@ SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 #~ CONFDIR=$SCRIPT_DIRECTORY/$grupo/"CONFDIR"
 
-CONFIGFILE=`find / -name "AFINSTAL.cnfg" 2>/dev/null`
+CONFIGFILE=`find /home -path "*/conf/AFINSTAL.cnfg" 2>/dev/null`
 CONFDIR="$(dirname $CONFIGFILE)"
 
 #~ Se le da permiso de ejecucion a GraLog si no lo tiene y se logea el inicio
@@ -18,21 +18,21 @@ logearInicioEjecucion() {
 	if [ ! -x GraLog ] ; then
 		chmod u+x GraLog
 	fi
-	GraLog AFINI "Comando Inicio de Ejecución"
+	./GraLog "AFINI" "Comando Inicio de Ejecución" "INFO"
 	echo "Comando AFINI Inicio de Ejecución" 
 }
 
 
 #~ Se logea un mensaje indicando que comenzo la ejecucion del comando.
 logearFinEjecucion() {
-	GraLog AFINI "Comando Inicio_A Fin de Ejecución"
+	./GraLog "AFINI" "Comando AFINI Fin de Ejecución" "INFO"
 	echo "Comando AFINI Fin de Ejecución"
 }
 
 #~ Se logea un mensaje indicando que el archivo recibido no existe.
 logearArchivoFaltante() {
 	echo "No se ha encontrado el archivo $@"
-	GraLog AFINI "No se ha encontrado el archivo $@" ERR
+	./GraLog "AFINI" "No se ha encontrado el archivo $@" "ERR"
 }
 
 clearScreen(){
@@ -177,23 +177,23 @@ verificarInstalacion() {
 
 #~ Se logea un mensaje indicando que la instalacion no se encuentra completa.
 logearInstalacionIncompleta() {
-	GraLog AFINI "La instalacion esta incompleta. Para solucionar el problema debe correr el comando AFINSTAL" ERR
+	./GraLog "AFINI" "La instalacion esta incompleta. Para solucionar el problema debe correr el comando AFINSTAL" "ERR"
 	echo "La instalacion esta incompleta. Para solucionar el problema debe correr el comando AFINSTAL"
 }
 
 #~ Se logea un mensaje indicando que la instalacion se encuentra completa.
 logearInstalacionCompleta() {
-	GraLog AFINI "El sistema se ha instalado correctamente y se encuentra completo."
+	./GraLog "AFINI" "El sistema se ha instalado correctamente y se encuentra completo." "INFO"
 }
 
 #~ Se logea un mensaje indicando que el comando recibido no cuenta con suficientes permisos para ser ejecutado.
 logearPermisoIncorrecto() {
-	GraLog AFINI "El siguiente comando no cuenta con suficientes permisos para ser ejecutado $@" ERR
+	./GraLog "AFINI" "El siguiente comando no cuenta con suficientes permisos para ser ejecutado $@" "ERR"
 }
 
 #~ Se logea un mensaje indicando que se modificaron los permisos del archivo recibido.
 logearCambioPermiso() {
-	GraLog AFINI "Seteando permiso de ejecucion al comando $@"
+	./GraLog "AFINI" "Seteando permiso de ejecucion al comando $@" "INFO"
 }
 
 #~ Verifica que los comandos del sistema tengan permisos de ejecucion.
@@ -281,12 +281,12 @@ setearPermisos() {
 
 #~ Se logea un mensaje indicando que los permisos de ejecucion son incorrectos.
 logearPermisosIncorrectos() {
-	GraLog AFINI "Los comandos necesarios para la ejecucion del programa no cuentan con permisos suficientes." ERR
+	./GraLog "AFINI" "Los comandos necesarios para la ejecucion del programa no cuentan con permisos suficientes." "ERR"
 }
 
 #~ Se logea un mensaje indicando que los permisos de ejecucion son correctos.
 logearPermisosCorrectos() {
-	GraLog AFINI "Los comandos necesarios para la ejecucion del programa cuentan con permisos suficientes."
+	./GraLog "AFINI" "Los comandos necesarios para la ejecucion del programa cuentan con permisos suficientes." "INFO"
 }
 
 #~ Devuelve true si esta seteado el PATH o false si no lo está.
@@ -316,7 +316,7 @@ usuarioIngresaComandoAFREC() {
 	read -p "Desea efectuar la activacion  de AFREC? Si - No: "
 	local VALOR_INGRESADO=$REPLY
 	while [ $VALOR_INGRESADO != si ] && [ $VALOR_INGRESADO != Si ] && [ $VALOR_INGRESADO != no ] && [ $VALOR_INGRESADO != No ] && [ $VALOR_INGRESADO != SI ] && [ $VALOR_INGRESADO != NO ]; do
-		GraLog "AFINI" "Inicio del comando AFREC. El usuario ingresa una opcion invalida: $VALOR_INGRESADO" WAR
+		./GraLog "AFINI" "Inicio del comando AFREC. El usuario ingresa una opcion invalida: $VALOR_INGRESADO" "WAR"
 		read -p "Ingrese una opcion valida (Si - No): "
 		VALOR_INGRESADO=$REPLY
 	done
@@ -344,7 +344,7 @@ mostrarArchivosDirectorio() {
 #~ Muestra el estado del sistema por pantalla.
 mostrarEstadoSistema() {
 	
-	echo "TP SO7508 Segundo Cuatrimestre 2015. Tema A Copyright © Grupo 10"
+	echo "TP SO7508 Segundo Cuatrimestre 2015. Tema J Copyright © Grupo 10"
 	
 	echo "Directorio de Configuración: $CONFDIR"
 	mostrarArchivosDirectorio $CONFDIR/*
@@ -407,7 +407,7 @@ if $INSTALACION_COMPLETA ; then
 	VARIABLES_AMBIENTE_SETEADAS=$(verificarVariablesAmbienteSeteadas)
 	if $VARIABLES_AMBIENTE_SETEADAS ; then
 		echo "El sistema ya ha sido inicializado. Para volver a ejecutar cierre la sesion y vuelva a iniciarla."
-		GraLog AFINI "El sistema ya ha sido inicializado. La inicialización terminará."
+		./GraLog "AFINI" "El sistema ya ha sido inicializado. La inicialización terminará." "INFO"
 	else 
 		setearVariablesAmbiente
 	fi
@@ -419,7 +419,7 @@ if $INSTALACION_COMPLETA ; then
 	if $INICIAR_AFREC ; then
 		if [ ! -z "$(pgrep AFREC)" ] ; then
 			echo "Demonio ya esta corriendo bajo el no.: " $(pgrep AFREC)
-			GraLog AFINI "El demonio ya esta corriendo en el sistema..."
+			./GraLog "AFINI" "El demonio ya esta corriendo en el sistema..."
 		else
 			GraLog AFINI "El usuario desea iniciar el comando AFREC. Invocando comando..."
 			./Arrancar "AFREC" "AFINI"
@@ -427,7 +427,7 @@ if $INSTALACION_COMPLETA ; then
 		fi
 	else
 		echo "Para iniciar el demonio se debe ejecutar el comando  Arrancar 'AFREC'"
-		GraLog AFINI "El usuario no desea iniciar el comando AFREC."
+		./GraLog AFINI "El usuario no desea iniciar el comando AFREC."
 	fi
 
 	mostrarEstadoSistema

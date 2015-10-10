@@ -11,7 +11,9 @@ LOGSTART=$CURRENT' '$USER' '$1
 if [ "$1" = "AFINSTAL.sh" -o "$1" = "AFINSTAL" ]
 then
 	LOGARCHIVE="$PWD/conf/AFINSTAL.log"
-fi
+else
+	LOGARCHIVE=$LOGDIR/$1.$LOGEXT
+fi 
 
 touch $LOGARCHIVE
 
