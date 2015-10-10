@@ -5,13 +5,13 @@ CONFDIR=$GRUPO/conf
 
 function log(){
 echo "$1"
-if [ -f ./GraLog ]
+if [ -f ./bin/GraLog ]
 then
-	if [ ! -x ./GraLog ]
+	if [ ! -x ./bin/GraLog ]
 	then
-		chmod +x ./GraLog
+		chmod +x ./bin/GraLog
 	fi
-	./GraLog "AFINSTAL" "$1" "INFO" #1= mensaje, 2= tipo
+	./bin/GraLog "AFINSTAL" "$1" "INFO" #1= mensaje, 2= tipo
 fi
 }
 
@@ -40,10 +40,17 @@ function existeArchivo(){
 }
 
 function mover(){
-	cp "$1" "$2" #1:origen 2:destino
-	#final="$2/$(quitarRaizDir $1)"
-	#chmod +x final
+if [ ! -f "$2" ]
+then
+    if [ "$3" == "TODOS" ]
+    then
+        cp -r "$1"/* "$2"
+    else
+        cp "$1" "$2"
+    fi
+fi
 }
+
 function verificarConf(){
 	local completa=true
 	local aux
@@ -70,7 +77,7 @@ function verificarConf(){
 	if [ -d "$BINDIR" ]; then
 		log "Directorio de Ejecutables: $BINDIR"
 		log "Archivos existentes"
-		for i in "$GRUPO"/*.sh;do
+		for i in "$GRUPO/bin"/*;do
 			aux="$BINDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
@@ -84,7 +91,7 @@ function verificarConf(){
 		faltantes[$j]="$BINDIR"
 		j=$((j+1))
 		completa=false
-		for i in "$GRUPO"/*.sh;do
+		for i in "$GRUPO/bin"/*;do
 		aux="$BINDIR/$(quitarRaizDir "$i")"
 		faltantes[$j]="$aux"
 		j=$((j+1))
@@ -97,13 +104,12 @@ function verificarConf(){
 	if [ -d "$MAEDIR" ]; then
 		log "Directorio de Maestros y Tablas: $MAEDIR"
 		log "Archivos existentes:"
-		for i in "$GRUPO"/*.{csv,mae,tab};do
+		for i in "$GRUPO/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
 			else
 				completa=false
-				echo "FALTANTE: $aux"	
 				faltantes[$j]="$aux"
 				j=$((j+1))
 			fi
@@ -112,7 +118,7 @@ function verificarConf(){
 		completa=false
 		faltantes[$j]="$MAEDIR"
 		j=$((j+1))
-		for i in "$GRUPO"/*.{csv,mae,tab};do
+		for i in "$GRUPO/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 				faltantes[$j]="$aux"
 				j=$((j+1))
@@ -211,7 +217,7 @@ function completarConf(){
 
 	############################ BINDIR #############################
 	if [ -d "$BINDIR" ]; then
-		for i in "$GRUPO"/*.sh;do
+		for i in "$GRUPO/bin"/*;do
 			aux="$BINDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$BINDIR"
@@ -219,14 +225,14 @@ function completarConf(){
 		done
 	else
 		mkdir "$BINDIR"
-		copiarConExtension "$GRUPO" "sh" "$BINDIR"
+		mover "$GRUPO" "$BINDIR" "TODOS"
 	fi
 
 
 	############################ MAEDIR #############################
 
 	if [ -d "$MAEDIR" ]; then
-		for i in "$GRUPO"/*.{csv,mae,tab};do
+		for i in "$GRUPO/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$MAEDIR"
@@ -234,9 +240,9 @@ function completarConf(){
 		done
 	else
 		mkdir "$MAEDIR"
-		copiarConExtension "$GRUPO" "csv" "$MAEDIR"
-		copiarConExtension "$GRUPO" "mae" "$MAEDIR"
-		copiarConExtension "$GRUPO" "tab" "$MAEDIR"
+		copiarConExtension "$GRUPO/mae" "csv" "$MAEDIR"
+		copiarConExtension "$GRUPO/mae" "mae" "$MAEDIR"
+		copiarConExtension "$GRUPO/mae" "tab" "$MAEDIR"
 	fi
 
 	############################ ACEPDIR #############################
@@ -553,6 +559,7 @@ function copiarConExtension(){ # 1: nombre dir origen 2: extension 3: destrino
 #	cp "$1" "$2" # 1: origen 2: destino
 }
 
+
 function crearDirectorios(){
 	log "Creando Estructuras de directorio. . . ."
 	crearDirectorio "$BINDIR"
@@ -569,11 +576,15 @@ function crearDirectorios(){
 
 function moverArchivos(){
 	log "Instalando Programas y Funciones"
-	copiarConExtension "$GRUPO" "sh" "$GRUPO$BINDIR"
+    if [ ! "$GRUPO/bin"  == "$GRUPO$BINDIR" ]; then
+        mover "$GRUPO/bin" "$GRUPO$BINDIR" "TODOS"
+    fi
 	log "Instalando Archivos Maestros y Tablas"
-	copiarConExtension "$GRUPO" "csv" "$GRUPO$MAEDIR"
-	copiarConExtension "$GRUPO" "mae" "$GRUPO$MAEDIR"
-	copiarConExtension "$GRUPO" "tab" "$GRUPO$MAEDIR"
+    if [ ! "$GRUPO/mae" == "$GRUPO$MAEDIR" ]; then
+        copiarConExtension "$GRUPO/mae" "csv" "$GRUPO$MAEDIR"
+        copiarConExtension "$GRUPO/mae" "mae" "$GRUPO$MAEDIR"
+        copiarConExtension "$GRUPO/mae" "tab" "$GRUPO$MAEDIR"
+    fi
 }
 
 function escribirVariable(){
