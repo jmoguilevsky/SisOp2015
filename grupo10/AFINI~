@@ -311,7 +311,7 @@ setearVariablesAmbiente() {
 }
 
 #~ Se le pide al usuario que decida si quiere ejecutar el comando AFREC o no.
-usuarioIngresaComandoAFREC() {
+usuarioIngresaComandoRecibir() {
 	
 	read -p "Desea efectuar la activacion  de AFREC? Si - No: "
 	local VALOR_INGRESADO=$REPLY
@@ -415,7 +415,7 @@ if $INSTALACION_COMPLETA ; then
 	INICIALIZACION_COMPLETA=true
 
 	#~ 4 - Inicializacion de AFREC
-	INICIAR_AFREC=$(usuarioIngresaComandoAFREC)
+	INICIAR_AFREC=$(usuarioIngresaComandoRecibir)
 	if $INICIAR_AFREC ; then
 		if [ ! -z "$(pgrep AFREC)" ] ; then
 			echo "Demonio ya esta corriendo bajo el no.: " $(pgrep AFREC)
