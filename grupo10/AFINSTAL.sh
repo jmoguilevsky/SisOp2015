@@ -5,13 +5,13 @@ CONFDIR=$GRUPO/conf
 
 function log(){
 echo "$1"
-if [ -f ./bin/GraLog ]
+if [ -f ./archivos_instalacion/bin/GraLog ]
 then
-	if [ ! -x ./bin/GraLog ]
+	if [ ! -x ./archivos_instalacion/bin/GraLog ]
 	then
-		chmod +x ./bin/GraLog
+		chmod +x ./archivos_instalacion/bin/GraLog
 	fi
-	./bin/GraLog "AFINSTAL" "$1" "INFO" #1= mensaje, 2= tipo
+	./archivos_instalacion/bin/GraLog "AFINSTAL" "$1" "INFO" #1= mensaje, 2= tipo
 fi
 }
 
@@ -77,7 +77,7 @@ function verificarConf(){
 	if [ -d "$BINDIR" ]; then
 		log "Directorio de Ejecutables: $BINDIR"
 		log "Archivos existentes"
-		for i in "$GRUPO/bin"/*;do
+		for i in "$GRUPO/archivos_instalacion/bin"/*;do
 			aux="$BINDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
@@ -91,7 +91,7 @@ function verificarConf(){
 		faltantes[$j]="$BINDIR"
 		j=$((j+1))
 		completa=false
-		for i in "$GRUPO/bin"/*;do
+		for i in "$GRUPO/archivos_instalacion/bin"/*;do
 		aux="$BINDIR/$(quitarRaizDir "$i")"
 		faltantes[$j]="$aux"
 		j=$((j+1))
@@ -104,7 +104,7 @@ function verificarConf(){
 	if [ -d "$MAEDIR" ]; then
 		log "Directorio de Maestros y Tablas: $MAEDIR"
 		log "Archivos existentes:"
-		for i in "$GRUPO/mae"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
@@ -118,7 +118,7 @@ function verificarConf(){
 		completa=false
 		faltantes[$j]="$MAEDIR"
 		j=$((j+1))
-		for i in "$GRUPO/mae"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 				faltantes[$j]="$aux"
 				j=$((j+1))
@@ -217,7 +217,7 @@ function completarConf(){
 
 	############################ BINDIR #############################
 	if [ -d "$BINDIR" ]; then
-		for i in "$GRUPO/bin"/*;do
+		for i in "$GRUPO/archivos_instalacion/bin"/*;do
 			aux="$BINDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$BINDIR"
@@ -225,14 +225,14 @@ function completarConf(){
 		done
 	else
 		mkdir "$BINDIR"
-		mover "$GRUPO" "$BINDIR" "TODOS"
+		mover "$GRUPO/archivos_instalacion/bin" "$BINDIR" "TODOS"
 	fi
 
 
 	############################ MAEDIR #############################
 
 	if [ -d "$MAEDIR" ]; then
-		for i in "$GRUPO/mae"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$MAEDIR"
@@ -240,9 +240,9 @@ function completarConf(){
 		done
 	else
 		mkdir "$MAEDIR"
-		copiarConExtension "$GRUPO/mae" "csv" "$MAEDIR"
-		copiarConExtension "$GRUPO/mae" "mae" "$MAEDIR"
-		copiarConExtension "$GRUPO/mae" "tab" "$MAEDIR"
+		copiarConExtension "$GRUPO/archivos_instalacion/mae" "csv" "$MAEDIR"
+		copiarConExtension "$GRUPO/archivos_instalacion/mae" "mae" "$MAEDIR"
+		copiarConExtension "$GRUPO/archivos_instalacion/mae" "tab" "$MAEDIR"
 	fi
 
 	############################ ACEPDIR #############################
@@ -576,14 +576,14 @@ function crearDirectorios(){
 
 function moverArchivos(){
 	log "Instalando Programas y Funciones"
-    if [ ! "$GRUPO/bin"  == "$GRUPO$BINDIR" ]; then
-        mover "$GRUPO/bin" "$GRUPO$BINDIR" "TODOS"
+    if [ ! "$GRUPO/archivos_instalacion/bin"  == "$GRUPO$BINDIR" ]; then
+        mover "$GRUPO/archivos_instalacion/bin" "$GRUPO$BINDIR" "TODOS"
     fi
 	log "Instalando Archivos Maestros y Tablas"
-    if [ ! "$GRUPO/mae" == "$GRUPO$MAEDIR" ]; then
-        copiarConExtension "$GRUPO/mae" "csv" "$GRUPO$MAEDIR"
-        copiarConExtension "$GRUPO/mae" "mae" "$GRUPO$MAEDIR"
-        copiarConExtension "$GRUPO/mae" "tab" "$GRUPO$MAEDIR"
+    if [ ! "$GRUPO/archivos_instalacion/mae" == "$GRUPO$MAEDIR" ]; then
+        copiarConExtension "$GRUPO/archivos_instalacion/mae" "csv" "$GRUPO$MAEDIR"
+        copiarConExtension "$GRUPO/archivos_instalacion/mae" "mae" "$GRUPO$MAEDIR"
+        copiarConExtension "$GRUPO/archivos_instalacion/mae" "tab" "$GRUPO$MAEDIR"
     fi
 }
 
