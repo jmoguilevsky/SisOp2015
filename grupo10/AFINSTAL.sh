@@ -576,7 +576,9 @@ function crearDirectorios(){
 
 function moverArchivos(){
 	log "Instalando Programas y Funciones"
-    mover "$GRUPO/bin" "$GRUPO$BINDIR" "TODOS"
+    if [ ! "$GRUPO/bin"  == "$GRUPO$BINDIR" ]; then
+        mover "$GRUPO/bin" "$GRUPO$BINDIR" "TODOS"
+    fi
 	log "Instalando Archivos Maestros y Tablas"
     if [ ! "$GRUPO/mae" == "$GRUPO$MAEDIR" ]; then
         copiarConExtension "$GRUPO/mae" "csv" "$GRUPO$MAEDIR"
