@@ -3,7 +3,7 @@
 #Parametro 2: opcional: funcion que llamo a Detener (si es que graba en Log).
 INICIALIZACION=true
 if [ $INICIALIZACION != true ]; then
-	#GraLog Arrancar "Error: la inicializacion no fue completada." ERROR
+	#GraLog Detener "Error: la inicializacion no fue completada." ERROR
 	exit 3
 fi
 ID=$(pidof -x "$1")

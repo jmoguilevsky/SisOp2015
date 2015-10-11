@@ -1,5 +1,10 @@
 #!/bin/bash
-LLAMADAS_ACEPTADAS=$(ls -t $ACEPDIR/)
+ACEPDIR="Datos"
+PROCDIR="procesados"
+RECHDIR="rechazados"
+MAEDIR="maedir"
+
+LLAMADAS_ACEPTADAS=$(ls $ACEPDIR/*)
 CODIGOS_PAIS=$MAEDIR/CdP.mae
 CODIGOS_AREA=$MAEDIR/CdA.mae
 CENTRALES=$MAEDIR/CdC.mae
@@ -13,28 +18,158 @@ DIR_LLAMADAS_RECHAZADAS=$RECHDIR/llamadas/
 RECH_EXT=".rech"
 LOGCOM="AFUMB"
 
-
 function log(){
-	GraLog $LOGCOM $1 $2
+	echo $LOGCOM $1 $2
+	#GraLog $LOGCOM $1 $2
 	#echo $2
 }
 
-GraLog "Inicio de AFUMB" INFO 
-#log $LOGCOM "Inicio de AFUMB" INFO 
-#log $LOGCOM "Cantidad de archivos a procesar: $(ls $ACEPDIR/ | wc -l)" INFO
-GraLog "Cantidad de archivos a procesar: $(ls $ACEPDIR/ | wc -l)" INFO
-
-
-for i in $LLAMADAS_ACEPTADAS; do
-	echo $DIR_ARCHIVOS_PROCESADOS$ACEPDIR/$i
-	if [ ! -f $DIR_ARCHIVOS_PROCESADOS/$ACEPDIR/$i ]; then
-    	log "Se rechaza el archivo por estar DUPLICADO"
-    	MoverA $ACEPDIR/$i $RECHDIR
+function determinar_tipo_llamada(){
+	#Param1: codigo de area de la llamada de origen
+	#Param2: codigo de area del destino
+	#Param3: codigo de pais de destino
+	#Param4: numero de linea de destino
+	local suma=$2$4
+	if [ ! "$4" ]; then
+		echo "NULO"
+	elif [ "$1" = "$2" ] && [ ${#suma} = 10 ]; then
+		echo "LOC"
+	elif [ "$1" != "$2" ] && [ ${#suma} = 10 ]; then
+		echo "DDN"
+	elif [ ! "$3" ]; then
+		echo "NULO"
+	elif grep -Fq "$3" "$CODIGOS_PAIS" && [ "$1" != "$2" ]; then
+		echo "DDI"
 	else
-		continue
-		#MoverA $ACEPDIR/$i $DIR_ARCHIVOS_PROCESADOS
+		echo "NULO"
 	fi
-	#while IFS='' read -r line || [[ -n "$line" ]]; do
-	#done < $ACEPDIR/$i
+}
+
+function rechazar_registro(){
+	#Param1: array con los datos del registro pasada por nombre
+	#Param2: mensaje con la razon del rechazo del registro
+	#Param3: nombre base del archivo que contenia al registro invalido
+	local name=$1[@]
+    local array=("${!name}")
+	mkdir -p "$RECHDIR/llamadas"
+	local delim=";"
+	local string=$3$delim$2
+	for camp in "${array[@]}"
+	do
+		string+=$delim$camp
+	done
+	echo "$string" >> "$RECHDIR/llamadas/$central.rech"
+}
+
+function determinar_umbral_tope(){
+	#Funcion que devuelve el id de un umbral ACTIVO y su tope de minutos separados por ";".
+	#Si no encuentra un umbral activo devuelve "Inactivo;0".
+	#Si hay mas de un umbral el criterio de seleccion es el ultimo umbral dentro del archivo
+	#Param1: area de origen
+	#Param2: numero de linea de origen
+	#Param3: tipo de llamada
+	#Param4: area de destino
+	#Param5: pais de destino
+
+	local ret="Inactivo;0"
+	while IFS='' read -r linea || [[ -n "$linea" ]]; do
+		IFS=';' read -a arreglo <<< "$linea"
+		local id_del_umbral=${arreglo[0]}
+		local area_origen=${arreglo[1]}
+		local numero_origen=${arreglo[2]}
+		local tipo_de_llamada=${arreglo[3]}
+		local codigo_destino=${arreglo[4]}
+		local tope=${arreglo[5]}
+		local estado=${arreglo[6]}
+
+		if [ "$area_origen" == "$1" ] && [ "$numero_origen" == "$2" ] && [ "$tipo_llamada" == "$3" ]; then
+			if [ ! "$codigo_destino" ] && [ "$estado" == "Activo" ]; then
+				ret="$id_del_umbral;$tope"
+			elif [ "$codigo_destino" == "$4" ] || [ "$codigo_destino" == "$5" ]; then
+				if [ "$estado" == "Activo" ]; then
+					ret="$id_del_umbral;$tope"
+				fi
+			fi
+		fi
+	done < "$UMBRALES"
+	echo "$ret"
+}
+
+log "Inicio de AFUMB" INFO 
+log "Cantidad de archivos a procesar: $(ls $ACEPDIR/ | wc -l)" INFO
+
+LLAMADAS_ORDENADAS=$( ls $LLAMADAS_ACEPTADAS | sort -n -t _ -k 2) #n sort numerico, -t _ separador, -k 1 sortear segun la columna 2 (las fechas)
+for i in $LLAMADAS_ORDENADAS; do
+	#Checkear si la primera linea es valida:
+	primer_linea=$(head -1 $i | grep '.*;.*;.*;.*;.*;.*;.*;.*$' )
+	if [ -z "$primer_linea" ]; then
+		log "Se RECHAZA el archivo $i porque su estructura no se corresponde con el formato esperado." WAR
+		continue
+	fi
+	#Checkear si el archivo esta duplicado
+	base=$(basename "$i")
+	if [ -f $DIR_ARCHIVOS_PROCESADOS/$base ]; then
+		log "Se rechaza el archivo $base por estar DUPLICADO" WAR
+		. MoverA $ACEPDIR/$base $RECHDIR
+		continue
+	fi
+	#Obtengo el nombre de la central
+	IFS='_' read -a arr_centrales <<< "$base"
+	central="${arr_centrales[0]}"
+	#Itero el archivo registro por registro validandolos:
+	cantidad_rechazados=0
+	cantidad_procesados=0
+	cantidad_con_umbral=0
+	cantidad_sin_umbral=0
+	cantidad_sospechosas=0
+	cantidad_no_sospechosas=0
+	log "Archivo a procesar: $base"
+	while IFS='' read -r line || [[ -n "$line" ]]; do
+		IFS=';' read -a arr <<< "$line"
+		id_agente=${arr[0]}
+		fecha=${arr[1]}
+		tiempo_conversacion=${arr[2]}
+		area_a=${arr[3]}
+		linea_a=${arr[4]}
+		pais_b=${arr[5]}
+		area_b=${arr[6]}
+		linea_b=${arr[7]}
+
+		cantidad_procesados=$[cantidad_procesados + 1]
+		#verifico que existe el codigo de area del origen de la llamada
+		if grep -Fq "$area_a" "$CODIGOS_AREA"
+		then
+			#Calculo que tipo de llamada es
+			tipo_llamada=$(determinar_tipo_llamada "$area_a" "$area_b" "$pais_b" "$linea_b")
+			if [ "${tipo_llamada}" == 'NULO' ]; then
+				cantidad_rechazados=$[cantidad_rechazados + 1]
+				rechazar_registro arr "El registro no concuerda con ningun tipo de llamada." "$base"
+				echo "$cantidad_rechazados"
+			else
+				#La llamada es valida, luego averiguo si tiene un umbral activo sobre ella.
+				umbral_tope=$(determinar_umbral_tope "$area_a" "$linea_a" "$tipo_llamada" "$area_b" "$pais_b")
+				IFS=';' read -a tupla <<< "$umbral_tope"
+				id_umbral=${tupla[0]}
+				tope=${tupla[1]}
+				if [ "$id_umbral" == "Inactivo" ]; then
+					cantidad_sin_umbral=$[cantidad_sin_umbral + 1]
+				else
+					#Se encontro un umbral activo, veo si la duracion excede el tope y luego es sospechosa.
+					cantidad_con_umbral=$[cantidad_con_umbral + 1]
+					echo "$id_umbral:Activo"
+					if [ "$tope" -lt "$tiempo_conversacion" ]; then
+						echo "supera el tope"
+						#Es sospechosa, la guardo
+						cantidad_sospechosas=$[cantidad_sospechosas + 1]
+					else
+						cantidad_no_sospechosas=$[cantidad_no_sospechosas + 1]
+					fi
+				fi
+			fi
+		else
+			rechazar_registro arr "El codigo de area de origen no es valido" "$base"
+			cantidad_rechazados=$[cantidad_rechazados + 1]
+		fi
+	done < "$i"
 done
 
