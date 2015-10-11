@@ -418,16 +418,16 @@ if $INSTALACION_COMPLETA ; then
 	INICIAR_AFREC=$(usuarioIngresaComandoAFREC)
 	if $INICIAR_AFREC ; then
 		if [ ! -z "$(pgrep AFREC)" ] ; then
-			echo "Demonio ya esta corriendo bajo el no.: " $(pgrep AFREC)
-			./GraLog "AFINI" "El demonio ya esta corriendo en el sistema..."
+			echo "Demonio ya esta corriendo bajo el no.: "$(pgrep AFREC)
+			./GraLog "AFINI" "El demonio ya esta corriendo en el sistema..." "WAR"
 		else
-			GraLog AFINI "El usuario desea iniciar el comando AFREC. Invocando comando..."
+			./GraLog AFINI "El usuario desea iniciar el comando AFREC. Invocando comando..." "INFO"
 			./Arrancar "AFREC" "AFINI"
-			echo "Para detener el demonio se debe ejecutar el comando Detener AFREC"
+			echo "Para detener el demonio se debe ejecutar el comando Detener 'AFREC'"
 		fi
 	else
 		echo "Para iniciar el demonio se debe ejecutar el comando  Arrancar 'AFREC'"
-		./GraLog AFINI "El usuario no desea iniciar el comando AFREC."
+		./GraLog "AFINI" "El usuario no desea iniciar el comando AFREC." "INFO"
 	fi
 
 	mostrarEstadoSistema
