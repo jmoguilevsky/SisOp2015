@@ -7,15 +7,11 @@ MAEDIR="maedir"
 LLAMADAS_ACEPTADAS=$(ls $ACEPDIR/*)
 CODIGOS_PAIS=$MAEDIR/CdP.mae
 CODIGOS_AREA=$MAEDIR/CdA.mae
-CENTRALES=$MAEDIR/CdC.mae
+#CENTRALES=$MAEDIR/CdC.mae
 AGENTES=$MAEDIR/agentes.mae
-TIPOS_LLAMADAS=$MAEDIR/tllama.tab
+#TIPOS_LLAMADAS=$MAEDIR/tllama.tab
 UMBRALES=$MAEDIR/umbral.tab
 
-DIR_LLAMADAS_SOSPECHOSAS=$PROCDIR
-DIR_ARCHIVOS_PROCESADOS=$PROCDIR/proc
-DIR_LLAMADAS_RECHAZADAS=$RECHDIR/llamadas/
-RECH_EXT=".rech"
 LOGCOM="AFUMB"
 
 function log(){
@@ -30,19 +26,21 @@ function determinar_tipo_llamada(){
 	#Param3: codigo de pais de destino
 	#Param4: numero de linea de destino
 	local suma=$2$4
+	local msg_ret
 	if [ ! "$4" ]; then
-		echo "NULO"
+		msg_ret="NULO"
 	elif [ "$1" = "$2" ] && [ ${#suma} = 10 ]; then
-		echo "LOC"
+		msg_ret="LOC"
 	elif [ "$1" != "$2" ] && [ ${#suma} = 10 ]; then
-		echo "DDN"
+		msg_ret="DDN"
 	elif [ ! "$3" ]; then
-		echo "NULO"
+		msg_ret="NULO"
 	elif grep -Fq "$3" "$CODIGOS_PAIS" && [ "$1" != "$2" ]; then
-		echo "DDI"
+		msg_ret="DDI"
 	else
-		echo "NULO"
+		msg_ret="NULO"
 	fi
+	echo "$msg_ret"
 }
 
 function rechazar_registro(){
@@ -95,6 +93,22 @@ function determinar_umbral_tope(){
 	echo "$ret"
 }
 
+function obtener_oficina(){
+	#Funcion que devuelve la oficina correspondiente a la id del agente pasado por parametro.
+	#Devuelve un string vacio si no fue encontrado.
+	#Param1: id del agente cuyo oficina se quiere saber.
+	local r=""
+	while IFS='' read -r reg || [[ -n "$lin" ]]; do
+		IFS=';' read -a reg <<< "$lin"
+		local agente_id=${reg[0]}
+		local agente_oficina=${reg[3]}
+		if [ "$agente_id" == "$1" ]; then
+			r="$agente_oficina"
+		fi
+	done < "$AGENTES"
+	echo "$r"
+}
+
 log "Inicio de AFUMB" INFO 
 log "Cantidad de archivos a procesar: $(ls $ACEPDIR/ | wc -l)" INFO
 
@@ -116,6 +130,8 @@ for i in $LLAMADAS_ORDENADAS; do
 	#Obtengo el nombre de la central
 	IFS='_' read -a arr_centrales <<< "$base"
 	central="${arr_centrales[0]}"
+	aux="${arr_centrales[1]}"
+	fecha_input=${aux:0:8}
 	#Itero el archivo registro por registro validandolos:
 	cantidad_rechazados=0
 	cantidad_procesados=0
@@ -144,7 +160,6 @@ for i in $LLAMADAS_ORDENADAS; do
 			if [ "${tipo_llamada}" == 'NULO' ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no concuerda con ningun tipo de llamada." "$base"
-				echo "$cantidad_rechazados"
 			else
 				#La llamada es valida, luego averiguo si tiene un umbral activo sobre ella.
 				umbral_tope=$(determinar_umbral_tope "$area_a" "$linea_a" "$tipo_llamada" "$area_b" "$pais_b")
@@ -156,11 +171,14 @@ for i in $LLAMADAS_ORDENADAS; do
 				else
 					#Se encontro un umbral activo, veo si la duracion excede el tope y luego es sospechosa.
 					cantidad_con_umbral=$[cantidad_con_umbral + 1]
-					echo "$id_umbral:Activo"
 					if [ "$tope" -lt "$tiempo_conversacion" ]; then
-						echo "supera el tope"
 						#Es sospechosa, la guardo
 						cantidad_sospechosas=$[cantidad_sospechosas + 1]
+						oficina=$(obtener_oficina "$id_agente")
+						mes=${fecha:3:2}
+						anio=${fecha:6:4}
+						camp="$central;$id_agente;$id_umbral;$tipo_llamada;$fecha;$tiempo_conversacion;$area_a;$linea_a;$pais_b;$area_b;$linea_b;$fecha_input"
+						echo "$camp" >> "$PROCDIR/$oficina_$anio$mes"
 					else
 						cantidad_no_sospechosas=$[cantidad_no_sospechosas + 1]
 					fi
@@ -170,6 +188,13 @@ for i in $LLAMADAS_ORDENADAS; do
 			rechazar_registro arr "El codigo de area de origen no es valido" "$base"
 			cantidad_rechazados=$[cantidad_rechazados + 1]
 		fi
+	#. MoverA $ACEPDIR/$base $PROCDIR
 	done < "$i"
+	echo "$cantidad_rechazados"
+	echo "$cantidad_procesados"
+	echo "$cantidad_con_umbral"
+	echo "$cantidad_sin_umbral"
+	echo "$cantidad_sospechosas"
+	echo "$cantidad_no_sospechosas"
 done
 
