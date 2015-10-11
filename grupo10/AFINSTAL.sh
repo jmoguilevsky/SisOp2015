@@ -1,9 +1,18 @@
+#!/bin/bash
 GRUPO=$PWD
 CONFDIR=$GRUPO/conf
 
 
 function log(){
-	echo "$1"
+echo "$1"
+if [ -f ./archivos_instalacion/bin/GraLog ]
+then
+	if [ ! -x ./archivos_instalacion/bin/GraLog ]
+	then
+		chmod +x ./archivos_instalacion/bin/GraLog
+	fi
+	./archivos_instalacion/bin/GraLog "AFINSTAL" "$1" "INFO" #1= mensaje, 2= tipo
+fi
 }
 
 ############################# PUNTO 1,2,3 ############################# 
@@ -31,8 +40,17 @@ function existeArchivo(){
 }
 
 function mover(){
-	cp "$1" "$2" #1:origen 2:destino
+if [ ! -f "$2" ]
+then
+    if [ "$3" == "TODOS" ]
+    then
+        cp -r "$1"/* "$2"
+    else
+        cp "$1" "$2"
+    fi
+fi
 }
+
 function verificarConf(){
 	local completa=true
 	local aux
@@ -59,7 +77,7 @@ function verificarConf(){
 	if [ -d "$BINDIR" ]; then
 		log "Directorio de Ejecutables: $BINDIR"
 		log "Archivos existentes"
-		for i in "$GRUPO"/*.sh;do
+		for i in "$GRUPO/archivos_instalacion/bin"/*;do
 			aux="$BINDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
@@ -73,7 +91,7 @@ function verificarConf(){
 		faltantes[$j]="$BINDIR"
 		j=$((j+1))
 		completa=false
-		for i in "$GRUPO"/*.sh;do
+		for i in "$GRUPO/archivos_instalacion/bin"/*;do
 		aux="$BINDIR/$(quitarRaizDir "$i")"
 		faltantes[$j]="$aux"
 		j=$((j+1))
@@ -86,13 +104,12 @@ function verificarConf(){
 	if [ -d "$MAEDIR" ]; then
 		log "Directorio de Maestros y Tablas: $MAEDIR"
 		log "Archivos existentes:"
-		for i in "$GRUPO"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
 			else
 				completa=false
-				echo "FALTANTE: $aux"	
 				faltantes[$j]="$aux"
 				j=$((j+1))
 			fi
@@ -101,7 +118,7 @@ function verificarConf(){
 		completa=false
 		faltantes[$j]="$MAEDIR"
 		j=$((j+1))
-		for i in "$GRUPO"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 				faltantes[$j]="$aux"
 				j=$((j+1))
@@ -200,7 +217,7 @@ function completarConf(){
 
 	############################ BINDIR #############################
 	if [ -d "$BINDIR" ]; then
-		for i in "$GRUPO"/*.sh;do
+		for i in "$GRUPO/archivos_instalacion/bin"/*;do
 			aux="$BINDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$BINDIR"
@@ -208,14 +225,14 @@ function completarConf(){
 		done
 	else
 		mkdir "$BINDIR"
-		copiarConExtension "$GRUPO" "sh" "$BINDIR"
+		mover "$GRUPO/archivos_instalacion/bin" "$BINDIR" "TODOS"
 	fi
 
 
 	############################ MAEDIR #############################
 
 	if [ -d "$MAEDIR" ]; then
-		for i in "$GRUPO"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$MAEDIR"
@@ -223,9 +240,9 @@ function completarConf(){
 		done
 	else
 		mkdir "$MAEDIR"
-		copiarConExtension "$GRUPO" "csv" "$MAEDIR"
-		copiarConExtension "$GRUPO" "mae" "$MAEDIR"
-		copiarConExtension "$GRUPO" "tab" "$MAEDIR"
+		copiarConExtension "$GRUPO/archivos_instalacion/mae" "csv" "$MAEDIR"
+		copiarConExtension "$GRUPO/archivos_instalacion/mae" "mae" "$MAEDIR"
+		copiarConExtension "$GRUPO/archivos_instalacion/mae" "tab" "$MAEDIR"
 	fi
 
 	############################ ACEPDIR #############################
@@ -290,10 +307,10 @@ fi
 
 function mostrarTerminos()
 {
-	log '***********************************************************'
-	log '* Proceso de Instalación de "AFRA-J"                      *'
-	log '* Tema J Copyright © Grupo xx - Segundo Cuatrimestre 2015 *'
-	log '***********************************************************'
+	echo '***********************************************************'
+	echo '* Proceso de Instalación de "AFRA-J"                      *'
+	echo '* Tema J Copyright © Grupo xx - Segundo Cuatrimestre 2015 *'
+	echo '***********************************************************'
 	log 'A T E N C I O N: Al instalar UD. expresa aceptar los términos y condiciones'
 	log 'del "ACUERDO DE LICENCIA DE SOFTWARE" incluido en este paquete.'
 	log 'Acepta? Si – No'
@@ -542,6 +559,7 @@ function copiarConExtension(){ # 1: nombre dir origen 2: extension 3: destrino
 #	cp "$1" "$2" # 1: origen 2: destino
 }
 
+
 function crearDirectorios(){
 	log "Creando Estructuras de directorio. . . ."
 	crearDirectorio "$BINDIR"
@@ -558,11 +576,15 @@ function crearDirectorios(){
 
 function moverArchivos(){
 	log "Instalando Programas y Funciones"
-	copiarConExtension "$GRUPO" "sh" "$GRUPO$BINDIR"
+    if [ ! "$GRUPO/archivos_instalacion/bin"  == "$GRUPO$BINDIR" ]; then
+        mover "$GRUPO/archivos_instalacion/bin" "$GRUPO$BINDIR" "TODOS"
+    fi
 	log "Instalando Archivos Maestros y Tablas"
-	copiarConExtension "$GRUPO" "csv" "$GRUPO$MAEDIR"
-	copiarConExtension "$GRUPO" "mae" "$GRUPO$MAEDIR"
-	copiarConExtension "$GRUPO" "tab" "$GRUPO$MAEDIR"
+    if [ ! "$GRUPO/archivos_instalacion/mae" == "$GRUPO$MAEDIR" ]; then
+        copiarConExtension "$GRUPO/archivos_instalacion/mae" "csv" "$GRUPO$MAEDIR"
+        copiarConExtension "$GRUPO/archivos_instalacion/mae" "mae" "$GRUPO$MAEDIR"
+        copiarConExtension "$GRUPO/archivos_instalacion/mae" "tab" "$GRUPO$MAEDIR"
+    fi
 }
 
 function escribirVariable(){

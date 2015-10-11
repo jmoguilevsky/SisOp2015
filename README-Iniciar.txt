@@ -11,11 +11,11 @@ Utilización de funciones:
 -Arrancar arg1 arg2
 	Objetivo: disparar procesos background por nombre
 	Parametros: arg1= funcion a arrancar en BACKGROUND.
-				arg2= opcional: funcion que llamo a Arrancar (si es que graba en Log).
-	Ejemplo: Arrancar "AFREC"
+		    arg2= opcional: funcion que llamo a Arrancar (si es que graba en Log).
+	Ejemplo: Arrancar "AFINI" "AFREC"
 
 -Detener arg1 arg2		
 	Objetivo: detener procesos, complementaria al Arrancar
 	Parametros: arg1=funcion a detener.
-				arg2=opcional: funcion que llamo a Detener (si es que graba en Log).
+		    arg2=opcional: funcion que llamo a Detener (si es que graba en Log).
 	Ejemplo: Detener "AFREC"
