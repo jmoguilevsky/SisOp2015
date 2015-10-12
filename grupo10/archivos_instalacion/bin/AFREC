@@ -23,7 +23,7 @@ function checkfile {
 		return 0
 	fi
 
-	FORMATO_OK=$( echo "$FILENAME" | grep -c "^[A-Z]\{3\}_[0-9]\{8\}.csv$")
+	FORMATO_OK=$( echo "$FILENAME" | grep -c "^[A-Z]\{3\}_[0-9]\{8\}$")
 	if (( !FORMATO_OK ))
 	then 
 		./GraLog AFREC "Archivo $FILENAME rechazado, nombre del archivo inválido." "WAR"
