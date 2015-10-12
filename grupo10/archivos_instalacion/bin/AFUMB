@@ -96,9 +96,9 @@ function obtener_oficina(){
 	#Devuelve un string vacio si no fue encontrado.
 	#Param1: id del agente cuyo oficina se quiere saber.
 	local r=""
-	while IFS='' read -r reg || [[ -n "$lin" ]]; do
+	while IFS='' read -r lin || [[ -n "$lin" ]]; do
 		IFS=';' read -a reg <<< "$lin"
-		local agente_id=${reg[0]}
+		local agente_id=${reg[2]}
 		local agente_oficina=${reg[3]}
 		if [ "$agente_id" == "$1" ]; then
 			r="$agente_oficina"
@@ -116,11 +116,12 @@ for i in $LLAMADAS_ORDENADAS; do
 	primer_linea=$(head -1 $i | grep '.*;.*;.*;.*;.*;.*;.*;.*$' )
 	if [ -z "$primer_linea" ]; then
 		log "Se RECHAZA el archivo $i porque su estructura no se corresponde con el formato esperado." WAR
+		. MoverA $ACEPDIR/$base $RECHDIR
 		continue
 	fi
 	#Checkear si el archivo esta duplicado
 	base=$(basename "$i")
-	if [ -f $DIR_ARCHIVOS_PROCESADOS/$base ]; then
+	if [ -f $PROCDIR/$base ]; then
 		log "Se rechaza el archivo $base por estar DUPLICADO" WAR
 		. MoverA $ACEPDIR/$base $RECHDIR
 		continue
@@ -176,7 +177,8 @@ for i in $LLAMADAS_ORDENADAS; do
 						mes=${fecha:3:2}
 						anio=${fecha:6:4}
 						camp="$central;$id_agente;$id_umbral;$tipo_llamada;$fecha;$tiempo_conversacion;$area_a;$linea_a;$pais_b;$area_b;$linea_b;$fecha_input"
-						echo "$camp" >> "$PROCDIR/proc/$oficina_$anio$mes"
+						n="_"
+						echo "$camp" >> "$PROCDIR/$oficina$n$anio$mes"
 					else
 						cantidad_no_sospechosas=$[cantidad_no_sospechosas + 1]
 					fi
