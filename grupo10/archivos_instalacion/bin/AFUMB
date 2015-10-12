@@ -186,8 +186,8 @@ for i in $LLAMADAS_ORDENADAS; do
 			rechazar_registro arr "El codigo de area de origen no es valido" "$base"
 			cantidad_rechazados=$[cantidad_rechazados + 1]
 		fi
-	MoverA $ACEPDIR/$base $PROCDIR
 	done < "$i"
+	MoverA $ACEPDIR/$base $PROCDIR
 	echo "Cantidad de llamadas = $cantidad_procesados: Rechazadas $cantidad_rechazados, Con umbral $cantidad_con_umbral, Sin umbral $cantidad_sin_umbral"
 	echo "Cantidad de llamadas sospechosas = $cantidad_sospechosas, no sospechosas $cantidad_no_sospechosas"
 	log "procesados: $cantidad_procesados" "INFO"
