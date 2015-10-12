@@ -365,10 +365,23 @@ sub elegir_filtro {
 
 }
 
+sub hash_to_text {
+    my $llamadat = shift;
+    return ${$llamadat}{'central'} . ' ' . 
+    ${$llamadat}{'agente'} . ' ' . 
+    ${$llamadat}{'umbral'} . ' ' . 
+    ${$llamadat}{'tipo_de_llamada'} . ' ' . 
+    ${$llamadat}{'tiempo_de_conv'} . ' ' . 
+    ${$llamadat}{'NumeroA'} . ' ' ;
+}
+
+
 while ($true) { # para hacer mas de una consulta
 
     if ($consulta){
 
+        my @salida = ();
+        my @potenciales;
         my @archivos_filtros = get_archivos_carpetas($PROCDIR);
         
         say "filtros por oficina";
@@ -426,7 +439,8 @@ while ($true) { # para hacer mas de una consulta
                 $llamada{'tiempo_de_conv'} = $fields[5];
                 $llamada{'NumeroA'} = $fields[6] . $fields[7];
 
-                push (@todos, \%llamada);
+                # push (@todos, \%llamada);
+                push(@todos, hash_to_text(\%llamada));
 
                 # cargamos los hashes
                 add_if_exist_hash(\%porCentral, $llamada{'central'}, \%llamada);
@@ -448,7 +462,7 @@ while ($true) { # para hacer mas de una consulta
             ['NumeroA', \%porNumerA]
         );
 
-        my @potenciales = @todos;
+        @potenciales = @todos;
 
         say 'Empezamos por los filtros: ';
         foreach my $filtro (@filtros ){
@@ -472,7 +486,7 @@ while ($true) { # para hacer mas de una consulta
                 foreach my $llamadas ($tupla[0][1]{$filtro}){
                     #say @{$llamada}[0];
                     foreach my $llamadat (@{$llamadas}){
-                        push(@sale_filtro, $llamadat);
+                        push(@sale_filtro, hash_to_text($llamadat));
                     }
                     #if (not grep $_ equ $llamada }) { 
                     #}
@@ -480,24 +494,26 @@ while ($true) { # para hacer mas de una consulta
                 }
             }
 
-            foreach my $llamadat (@sale_filtro){
-                say ${$llamadat}{'central'} . ' ' . 
-                ${$llamadat}{'agente'} . ' ' . 
-                ${$llamadat}{'umbral'} . ' ' . 
-                ${$llamadat}{'tipo_de_llamada'} . ' ' . 
-                ${$llamadat}{'tiempo_de_conv'} . ' ' . 
-                ${$llamadat}{'NumeroA'} . ' ' ;
-            }
+            # foreach my $llamadat (@sale_filtro){
+            #     #say hash_to_text($llamadat);
+            #     say $llamadat;
+            # }
 
-            my @salida = ();
-            foreach my $llamada_potencia (@potenciales){
+            
             # para cada potencia en potencial:
-            #     sii está en salida en sale_filtro 
+            foreach my $llamada_potencia (@potenciales){
+            
+                # if (not grep $_ eq $archivo, @filtered_list ){
+                if (grep $_ eq $llamada_potencia, @sale_filtro){
+                    if (not grep $_ eq $llamada_potencia, @salida){
+                        push (@salida, $llamada_potencia);
+                    }
+                }            #     sii está en salida en sale_filtro y no está en salida:
             #         agregar en salida:
                 
             }
 
-            # potencial = salida;
+            @potenciales = @salida;
             # si la salida está vacia -> warning la selección quedó vacía
             #TODO
 
@@ -506,11 +522,15 @@ while ($true) { # para hacer mas de una consulta
         }
         #   Filtro por tiempo de conversación (rango)
 
+        #TODO: imprimir todas las llamadas
+        foreach my $llamadat (@potenciales){
+            #say hash_to_text($llamadat);
+            say $llamadat;
+        }
+
+        say "    -\nEmpieza nueva consulta";
     }
 
-    #TODO: imprimir todas las llamadas
-
-    say "    -\nEmpieza nueva consulta";
 }
  
 
