@@ -17,6 +17,6 @@ else
 	TIPO=INFO
 fi
 if [ ! -z "$2" ]; then
-	# GraLog Arrancar "$MSG" $TIPO
+	GraLog Arrancar "$MSG" $TIPO
 fi
 echo "$MSG"

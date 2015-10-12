@@ -1,23 +1,21 @@
 #!/bin/bash
-ACEPDIR="Datos"
-PROCDIR="procesados"
-RECHDIR="rechazados"
-MAEDIR="maedir"
+#ACEPDIR="/home/joni/Facu/Sisop/tp/gitProj/SisOp2015/grupo10/aceptadas"
+#PROCDIR="procesados"
+#RECHDIR="rechazados"
+#MAEDIR="maedir"
 
 LLAMADAS_ACEPTADAS=$(ls $ACEPDIR/*)
 CODIGOS_PAIS=$MAEDIR/CdP.mae
 CODIGOS_AREA=$MAEDIR/CdA.mae
-#CENTRALES=$MAEDIR/CdC.mae
+CENTRALES=$MAEDIR/CdC.mae
 AGENTES=$MAEDIR/agentes.mae
-#TIPOS_LLAMADAS=$MAEDIR/tllama.tab
+TIPOS_LLAMADAS=$MAEDIR/tllama.tab
 UMBRALES=$MAEDIR/umbral.tab
 
 LOGCOM="AFUMB"
 
 function log(){
-	echo $LOGCOM $1 $2
-	#GraLog $LOGCOM $1 $2
-	#echo $2
+	GraLog $LOGCOM $1 $2
 }
 
 function determinar_tipo_llamada(){
@@ -139,7 +137,7 @@ for i in $LLAMADAS_ORDENADAS; do
 	cantidad_sin_umbral=0
 	cantidad_sospechosas=0
 	cantidad_no_sospechosas=0
-	log "Archivo a procesar: $base"
+	log "Archivo a procesar: $base" "INFO"
 	while IFS='' read -r line || [[ -n "$line" ]]; do
 		IFS=';' read -a arr <<< "$line"
 		id_agente=${arr[0]}
@@ -178,7 +176,7 @@ for i in $LLAMADAS_ORDENADAS; do
 						mes=${fecha:3:2}
 						anio=${fecha:6:4}
 						camp="$central;$id_agente;$id_umbral;$tipo_llamada;$fecha;$tiempo_conversacion;$area_a;$linea_a;$pais_b;$area_b;$linea_b;$fecha_input"
-						echo "$camp" >> "$PROCDIR/$oficina_$anio$mes"
+						echo "$camp" >> "$PROCDIR/proc/$oficina_$anio$mes"
 					else
 						cantidad_no_sospechosas=$[cantidad_no_sospechosas + 1]
 					fi
@@ -188,13 +186,17 @@ for i in $LLAMADAS_ORDENADAS; do
 			rechazar_registro arr "El codigo de area de origen no es valido" "$base"
 			cantidad_rechazados=$[cantidad_rechazados + 1]
 		fi
-	#. MoverA $ACEPDIR/$base $PROCDIR
+	MoverA $ACEPDIR/$base $PROCDIR
 	done < "$i"
-	echo "$cantidad_rechazados"
-	echo "$cantidad_procesados"
-	echo "$cantidad_con_umbral"
-	echo "$cantidad_sin_umbral"
-	echo "$cantidad_sospechosas"
-	echo "$cantidad_no_sospechosas"
+	echo "Cantidad de llamadas = $cantidad_procesados: Rechazadas $cantidad_rechazados, Con umbral $cantidad_con_umbral, Sin umbral $cantidad_sin_umbral"
+	echo "Cantidad de llamadas sospechosas = $cantidad_sospechosas, no sospechosas $cantidad_no_sospechosas"
+	log "procesados: $cantidad_procesados" "INFO"
+	log "rechazados: $cantidad_rechazados" "INFO"
+	log "con umbral: $cantidad_con_umbral" "INFO"
+	log "sin umbral: $cantidad_sin_umbral" "INFO"
+	log "sospechosas: $cantidad_sospechosas" "INFO"
+	log "no sospechosas: $cantidad_no_sospechosas" "INFO"
 done
+
+log "Fin de AFUMB" INFO
 
