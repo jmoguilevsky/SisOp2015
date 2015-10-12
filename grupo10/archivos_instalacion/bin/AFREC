@@ -1,54 +1,58 @@
 #! /bin/bash
 SLEEP_TIME=30
 CYCLE_COUNT=0
-CANT_SEG_UN_ANIO=$(( 1 * 365 * 24 * 3600 ))
+DIAS_RANGO=365
+CANT_SEG_RANGO=$(( DIAS_RANGO * 24 * 3600 ))
 ARCH_CENTRALES=$MAEDIR/centrales.mae
+
 function checkfile {
+	
+	FILENAME=$1
 
-	EMPTY_OK=$(file "$NOVEDIR/$1" | grep -c "empty")
-	if (( EMPTY_OK ))
+	VACIO=$(file "$NOVEDIR/$FILENAME" | grep -c "empty")
+	if (( VACIO ))
 	then
-		./GraLog "AFREC" "Archivo $1 rechazado, el archivo está vacío." "WAR"
+		./GraLog "AFREC" "Archivo $FILENAME rechazado, el archivo está vacío." "WAR"
 		return 0
 	fi
 
-	TEXT_OK=$(file "$NOVEDIR/$1" | grep -c "text")
-	if (( !TEXT_OK ))
+	ES_TEXTO=$(file "$NOVEDIR/$FILENAME" | grep -c "text")
+	if (( !ES_TEXTO ))
 	then
-		./GraLog "AFREC" "Archivo $1 rechazado, el archivo no es de texto." "WAR"
+		./GraLog "AFREC" "Archivo $FILENAME rechazado, el archivo no es de texto." "WAR"
 		return 0
 	fi
 
-	FORMAT_OK=$( echo "$1" | grep -c "^[A-Z]\{3\}_[0-9]\{8\}.csv$")
-	if (( !FORMAT_OK ))
+	FORMATO_OK=$( echo "$FILENAME" | grep -c "^[A-Z]\{3\}_[0-9]\{8\}.csv$")
+	if (( !FORMATO_OK ))
 	then 
-		./GraLog AFREC "Archivo $1 rechazado, nombre del archivo inválido." "WAR"
+		./GraLog AFREC "Archivo $FILENAME rechazado, nombre del archivo inválido." "WAR"
 		return 0
 	fi
 
-	COD_CENTRAL_OK=$( grep -c "$( echo "$1" | cut -d_ -f1 )" $ARCH_CENTRALES)
-	if (( !COD_CENTRAL_OK ))
+	COD_CENTRAL_EXISTE=$( grep -c "$( echo "$FILENAME" | cut -d_ -f1 )" $ARCH_CENTRALES)
+	if (( !COD_CENTRAL_EXISTE ))
 	then 
-		./GraLog "AFREC" "Archivo $1 rechazado, código de central inexistente." "WAR"
+		./GraLog "AFREC" "Archivo $FILENAME rechazado, código de central inexistente." "WAR"
 		return 0
 	fi
 
-	FECHA=$( echo "$1" | cut -d_ -f2 | cut -d. -f1)
+	FECHA=$( echo "$FILENAME" | cut -d_ -f2 | cut -d. -f1)
 	date -d "$FECHA" &> /dev/null
 	FECHA_VALIDA=!$?
 	if (( !FECHA_VALIDA ))
 	then
-		./GraLog "AFREC" "Archivo $1 rechazado, fecha inválida." "WAR"
+		./GraLog "AFREC" "Archivo $FILENAME rechazado, fecha inválida." "WAR"
 		return 0
 	fi	
 
 	DIFF_SEGUNDOS=$(( $(date +"%s")-$(date -d "$FECHA" +"%s") ))
 
-	FECHA_RANGO_OK=$(( DIFF_SEGUNDOS >= 0 && DIFF_SEGUNDOS <= CANT_SEG_UN_ANIO))
+	FECHA_RANGO_VALIDO=$(( DIFF_SEGUNDOS >= 0 && DIFF_SEGUNDOS <= CANT_SEG_RANGO))
 
-	if (( !FECHA_RANGO_OK ))
+	if (( !FECHA_RANGO_VALIDO ))
 	then
-		./GraLog "AFREC" "Archivo $1 rechazado, fecha fuera de rango." "WAR"
+		./GraLog "AFREC" "Archivo $FILENAME rechazado, fecha fuera de rango." "WAR"
 		return 0
 	fi
 	return 1
@@ -70,6 +74,7 @@ function moverArchivos {
 }
 
 function checkFiles {
+	FILE_LIST=( $(ls -A $NOVEDIR) )
 	ACEPTADOS=()
 	RECHAZADOS=()
 	for FILE in ${FILE_LIST[*]}
@@ -91,8 +96,6 @@ function main {
 	CYCLE_COUNT=$(( CYCLE_COUNT + 1 ))
 
 	./GraLog "AFREC" "AFREC ciclo nro. $CYCLE_COUNT" "INFO"
-
-	FILE_LIST=( $(ls -A $NOVEDIR) )
 
 	checkFiles
 
