@@ -365,16 +365,22 @@ sub elegir_filtro {
 
 }
 
+
 sub hash_to_text {
     my $llamadat = shift;
-    return ${$llamadat}{'central'} . ' ' . 
-    ${$llamadat}{'agente'} . ' ' . 
+    return ${$llamadat}{'central'} . ';' . 
+    ${$llamadat}{'agente'} . ';' . 
     ${$llamadat}{'umbral'} . ' ' . 
-    ${$llamadat}{'tipo_de_llamada'} . ' ' . 
-    ${$llamadat}{'tiempo_de_conv'} . ' ' . 
-    ${$llamadat}{'NumeroA'} . ' ' ;
+    ${$llamadat}{'tipo_de_llamada'} . ';' .
+    ${$llamadat}{'inicioLlamada'} . ';' .
+    ${$llamadat}{'tiempo_de_conv'} . ';' .
+    ${$llamadat}{'AreaA'} . ';' . 
+    ${$llamadat}{'NumeroA'} . ';' .
+    ${$llamadat}{'PaisB'} . ';' .
+    ${$llamadat}{'AreaB'} . ';' .
+    ${$llamadat}{'NumeroB'} . ';' .
+    ${$llamadat}{'FechaArchivo'};
 }
-
 
 while ($true) { # para hacer mas de una consulta
 
@@ -431,6 +437,18 @@ while ($true) { # para hacer mas de una consulta
                 #say $fields[2];
 
                 # modelamos la llamada
+                # 0centra
+                # 1algente
+                # 2idumbral
+                # 3Tipo de llamada
+                # 4Inicio de llamada
+                # 5Tiempo
+                # 6AreaA
+                # 7NumeroA
+                # 8PaisB
+                # 9AreaB
+                # 10NumeroB
+                # 11Fecha
                 my  %llamada;
                 $llamada{'central'} = $fields[0];
                 $llamada{'agente'} = $fields[1];
@@ -438,6 +456,17 @@ while ($true) { # para hacer mas de una consulta
                 $llamada{'tipo_de_llamada'} = $fields[3];
                 $llamada{'tiempo_de_conv'} = $fields[5];
                 $llamada{'NumeroA'} = $fields[6] . $fields[7];
+                
+                $llamada{'inicioLlamada'} = $fields[4];
+                $llamada{'AreaA'} = $fields[6];
+                $llamada{'NumeroA'} = $fields[7];
+                $llamada{'PaisB'} = $fields[8];
+                $llamada{'AreaB'} = $fields[9];
+                $llamada{'NumeroB'} = $fields[10];
+                $llamada{'FechaArchivo'} = $fields[11];
+                
+
+
 
                 # push (@todos, \%llamada);
                 push(@todos, hash_to_text(\%llamada));
