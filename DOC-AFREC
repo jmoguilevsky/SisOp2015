@@ -1,0 +1,31 @@
+Documentación técnica
+---------------------
+
+Funciones creadas
+-----------------
+
+checkfile
+---------
+- Parámetros: Recibe como único parámetro el nombre de un archivo
+- Descripción: Realiza la comprobación del formato y tipo de archivo especificada en el README-AFREC. Graba en el archivo de log cuando un archivo es rechazado, junto con el motivo del rechazo. 
+- Valor de retorno: 0 si el archivo es rechazado, 1 si el archivo es aceptado.
+
+moverArchivos
+-------------
+- Parámetros: -
+- Descripción: Mueve todos los archivos que hayan sido aceptados o rechazados a las carpetas definidas durante la instalación.
+- Valor de retorno: -
+
+checkFiles
+----------
+- Parámetros: -
+- Descripción: Recorre el listado de archivos presentes en la carpeta de novedades, y llama a checkfile para cada archivo. Crea listados para los archivos aceptados y para los archivos rechazados.
+- Valor de retorno: -
+
+main
+----
+- Parámetros: -
+- Descripción: En ella se ejecuta un ciclo de AFREC, es decir, es la función principal del comando que se llama periódicamente. Llama a checkFiles y moverArchivos, y si hay archivos pendientes aceptados y que no hayan sido aún procesados, invoca al comando AFUMB, si es que éste no está corriendo. Si AFUMB ya está corriendo, pospone su ejecución para el próximo ciclo.
+- Valor de retorno: -
+
+Además se utilizan las funciones auxiliares GraLog, para indicar en el log cuando un archivo ha sido aceptado o rechazado, y el motivo para el rechazo; MoverA, para mover los archivos a las carpetas correspondientes; y Arrancar, para invocar al comando AFUMB.
