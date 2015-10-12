@@ -3,15 +3,31 @@ GRUPO=$PWD
 CONFDIR=$GRUPO/conf
 
 
-function log(){
-echo "$1"
+function log(){ #si no se quiere imprimierlo por pantalla pasar S como segundo argumento
+if [ ! "$2" = "S" ]; then
+    echo "$1"
+fi
 if [ -f ./archivos_instalacion/bin/GraLog ]
 then
 	if [ ! -x ./archivos_instalacion/bin/GraLog ]
 	then
 		chmod +x ./archivos_instalacion/bin/GraLog
 	fi
-	./archivos_instalacion/bin/GraLog "AFINSTAL" "$1" "INFO" #1= mensaje, 2= tipo
+	./archivos_instalacion/bin/GraLog "AFINSTAL" "$1" "INFO"
+fi
+}
+
+function logError(){
+if [ ! "$2" = "S" ]; then
+    echo "$1"
+fi
+if [ -f ./archivos_instalacion/bin/GraLog ]
+then
+	if [ ! -x ./archivos_instalacion/bin/GraLog ]
+	then
+		chmod +x ./archivos_instalacion/bin/GraLog
+	fi
+	./archivos_instalacion/bin/GraLog "AFINSTAL" "$1" "ERR"
 fi
 }
 
@@ -204,9 +220,9 @@ function finalizarConf(){
 	        while true; do
 	                read aux
         	        case $aux in
-                	        "Si" ) completarConf; verificarConf;break;;
-                        	"No" ) finalizarInstalacion; break;;
-	                        * ) echo "Debe ingrear Si o No";;
+                	        "Si" ) log "Si" "S"; completarConf; verificarConf;break;;
+                        	"No" ) log "No" "S"; finalizarInstalacion; break;;
+	                        * ) logError "Debe ingrear Si o No";;
         	        esac
 	        done
 	fi
@@ -317,9 +333,9 @@ function mostrarTerminos()
 	while true; do
 		read aux
 		case $aux in
-			"Si" ) break;;
-			"No" ) exit 0; break;;
-			* ) echo "Debe ingrear Si o No";;
+			"Si" ) log "Si" "S"; break;;
+			"No" ) log "NO" "S"; exit 0; break;;
+			* ) logError "Debe ingrear Si o No";;
 		esac
 	done
 }
@@ -380,6 +396,7 @@ function leerDirectorio() #$1 variable, $3 valor variables, $2 = texto a mostrar
 	local res
 	while true; do
 	read aux
+    log "$aux" "S"
 	if [ "$aux" = "" ]; then
 		res=$(quitarRaizDir "$dirDefault")
 		res="/$res"
@@ -393,7 +410,7 @@ function leerDirectorio() #$1 variable, $3 valor variables, $2 = texto a mostrar
 		fi 
 		break
 	else
-		log "Directorio invalido, ingrese otro"
+		logError "Directorio invalido, ingrese otro"
 	fi
 	done
 	eval $_arg=\"$res\"
@@ -412,6 +429,7 @@ function leerEspacioMinimo(){ #$1 = variable, $2 = texto con tamaño default ent
 	local res
 	while true; do
 		read aux
+        log "$aux" "S"
 		if [ "$aux" = "" ]; then
 			res=$numDefault
 			break
@@ -419,16 +437,16 @@ function leerEspacioMinimo(){ #$1 = variable, $2 = texto con tamaño default ent
 		if esNumero $aux; then
 			local espacioLibre=$(getEspacioLibre)
 			if [ $espacioLibre -le $aux ]; then
-				log "Insuficiente espacio en disco."
-				log "Espacio disponible: $espacioLibre Mb."
-				log "Espacio requerido: $aux Mb."
-				log "Inténtelo nuevamente."
+				logError "Insuficiente espacio en disco."
+				logError "Espacio disponible: $espacioLibre Mb."
+				logError "Espacio requerido: $aux Mb."
+				logError "Inténtelo nuevamente."
 			else
 				res="$aux"
 				break
 			fi
 		else
-			log "Debe insertar un número"
+			logError "Debe insertar un número"
 		fi
 	done
 	eval $_arg="$res"
@@ -448,6 +466,7 @@ function leerExtension()
         local res
         while true; do
         read aux
+        log "$aux" "S"
         if [ "$aux" = "" ]; then
                 res=$extDefault
                 break
@@ -456,7 +475,7 @@ function leerExtension()
                         res=$aux
                 break
         else
-                log "La extension debe contener 5 o menos caracteres"
+                logError "La extension debe contener 5 o menos caracteres"
         fi
         done
         eval $_arg="$res"
@@ -476,6 +495,7 @@ function leerTamanioMaximo()
         local res
         while true; do
         read aux
+        log "$aux" "S"
         if [ "$aux" = "" ]; then
                 res=$tamDefault
                 break
@@ -484,7 +504,7 @@ function leerTamanioMaximo()
                 res=$aux
                 break
         else
-                log "Debe ingresar un número"
+                logError "Debe ingresar un número"
         fi
         done
         eval $_arg="$res"
@@ -526,9 +546,9 @@ function confirmarDirectorios()
 	while true; do
 		read aux
 		case $aux in
-			"Si" ) return 0; break;;
-			"No" ) return 1; break;;
-			* ) echo "Debe ingrear Si o No";;
+			"Si" ) log "Si" "S"; return 0; break;;
+			"No" ) log "No" "S"; return 1; break;;
+			* ) logError "Debe ingrear Si o No";;
 		esac
 	done
 }
@@ -540,9 +560,9 @@ function confirmarInicioInstalacion(){
 	while true; do
                 read aux
                 case $aux in
-                        "Si" ) break;;
-                        "No" ) finalizarInstalacion; break;;
-                        * ) echo "Debe ingrear Si o No";;
+                        "Si" ) log "Si" "S"; break;;
+                        "No" ) log "No" "S"; finalizarInstalacion; break;;
+                        * ) logError "Debe ingrear Si o No";;
                 esac
         done
 }
@@ -556,7 +576,6 @@ function crearDirectorio(){
 
 function copiarConExtension(){ # 1: nombre dir origen 2: extension 3: destrino
 	find "$1" -maxdepth 1 -name \*."$2" -exec cp {} "$3" \;
-#	cp "$1" "$2" # 1: origen 2: destino
 }
 
 
@@ -593,7 +612,7 @@ function escribirVariable(){
 }
 
 function escribirConfiguracion(){
-	echo "Actualizando la configuración del sistema"
+	log "Actualizando la configuración del sistema"
 	local archivo="$CONFDIR/AFINSTAL.cnfg"
 	
 	escribirVariable "BINDIR" "$GRUPO$BINDIR" "$archivo"
