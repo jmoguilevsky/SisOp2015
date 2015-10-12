@@ -344,13 +344,13 @@ sub elegir_filtro {
     my $result = una_varias_todas();
 
 
-    say 'A continuación opciones posibles: ';
-    foreach (@lista_posibilidades){
-        print $_.', ';
-    }
-    print "\n";
     
     if ($result eq (MYENUM)[VARIAS]) {
+        say 'A continuación opciones posibles: ';
+        foreach (@lista_posibilidades){
+            print $_.', ';
+        }
+        print "\n";
         my @filtros = get_aniomes('Ingrese los filtros usando las opciones atenriores (separados por espacios): ');
         return @filtros;
     } elsif (($result eq (MYENUM)[TODAS])) {
@@ -530,12 +530,15 @@ while ($true) { # para hacer mas de una consulta
 
             
             # para cada potencia en potencial:
+            @salida = ();
+            # say 'entra a potenciales';
             foreach my $llamada_potencia (@potenciales){
             
                 # if (not grep $_ eq $archivo, @filtered_list ){
                 if (grep $_ eq $llamada_potencia, @sale_filtro){
                     if (not grep $_ eq $llamada_potencia, @salida){
                         push (@salida, $llamada_potencia);
+                        # say $llamada_potencia;
                     }
                 }            #     sii está en salida en sale_filtro y no está en salida:
             #         agregar en salida:
