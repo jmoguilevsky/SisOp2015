@@ -79,14 +79,22 @@ function determinar_umbral_tope(){
 		local estado=${arreglo[6]}
 
 		if [ "$area_origen" == "$1" ] && [ "$numero_origen" == "$2" ] && [ "$tipo_llamada" == "$3" ]; then
-			if [ ! "$codigo_destino" ] && [ "$estado" == "Activo" ]; then
-				ret="$id_del_umbral;$tope"
+			if [ ! "$codigo_destino" ]; then
+				if [ "$estado" == "Activo" ]; then
+					ret="$id_del_umbral;$tope"
+					#echo "$id_del_umbral" >&1
+				else
+					ret="Inactivo;0"
+				fi
 			elif [ "$codigo_destino" == "$4" ] || [ "$codigo_destino" == "$5" ]; then
 				if [ "$estado" == "Activo" ]; then
 					ret="$id_del_umbral;$tope"
+					#echo "$id_del_umbral" >&1
+				else
+					ret="Inactivo;0"
 				fi
 			fi
-		fi
+		fi	
 	done < "$UMBRALES"
 	echo "$ret"
 }
