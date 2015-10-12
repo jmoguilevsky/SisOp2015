@@ -1,0 +1,51 @@
+General
+-------
+El propósito de este comando es leer los archivos que se encuentran en el directorio ACEPDIR con información de archivos de llamadas, procesarlos cronológicamente, asignar el id de umbral si corresponde y grabar los registros de llamadas sospechosas en el archivo de oficina que corresponda en un archivo diferente por cada año – mes.
+
+Criterios de análisis de archivos de llamadas
+---------------------------------------------
+1)Archivo tenga un formato válido, con sus 8 campos separados por ‘;’. De lo contrario se lo mueve a $RECHDIR
+2)Ver que el archivo no se haya procesado, en caso contrario se considera duplicado y se lo mueve a $RECHDIR. Estar procesado es que haya un archivo con el mismo nombre en la carpeta $PROCDIR.
+3)Se empieza el análisis por registro. Se verifica que:
+	El código de área de origen sea válido.
+	El código de área y el número de origen sumen 10 dígitos en total.
+	El código del agente sea válido y que exista una oficina correspondiente.
+	El tiempo de conversación sea mayor o igual que cero.
+	La llamada corresponda a algunos de los casos presentados (Local, DDI, DDN).
+Luego se determina si la llamada es sospechosa o no, para ello primero se verifica que exista un umbral en estado activo para el registro. Luego se compara el tope de minutos permitidos para el umbral  con el tiempo de conversación de llamada y, si se supera el tope, se escribe en un archivo la información de la llamada
+Luego de procesar todos los registros, se imprime por consola un resumen de los resultados.
+
+Funciones Auxiliares
+--------------------
+obtener_oficina()
+	#Funcion que devuelve la oficina correspondiente a la id del agente pasado por parametro.
+	#Devuelve un string vacio si no fue encontrado.
+	#Param1: id del agente cuyo oficina se quiere saber.
+
+determinar_umbral_tope()
+	#Funcion que devuelve el id de un umbral ACTIVO y su tope de minutos separados por ";".
+	#Si no encuentra un umbral activo devuelve "Inactivo;0".
+	#Si hay mas de un umbral el criterio de seleccion es el ultimo umbral dentro del archivo
+	#Param1: area de origen
+	#Param2: numero de linea de origen
+	#Param3: tipo de llamada
+	#Param4: area de destino
+	#Param5: pais de destino
+
+rechazar_registro()
+	#Funcion que se encarga de guardar la informacion de un registro rechazado en $RECHDIR/llamadas/$central.rech
+	#Param1: array con los datos del registro pasada por nombre
+	#Param2: mensaje con la razon del rechazo del registro
+	#Param3: nombre base del archivo que contenia al registro invalido
+
+determinar_tipo_llamada()
+	#Funcion que determina si el tipo de llamada es DDI, DDN o LOC. Devuelve un string con la respuesta o "NULO" si no corresponde a ninguna de las clasificaciones
+	#Param1: codigo de area de la llamada de origen
+	#Param2: codigo de area del destino
+	#Param3: codigo de pais de destino
+	#Param4: numero de linea de destino
+
+log()
+	#Asiste en la grabación de los resultados en el log
+	#Param1: Mensaje a escribir
+	#Param2: Tipo de mensaje (INFO, WAR, ERROR)

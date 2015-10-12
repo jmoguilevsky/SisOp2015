@@ -19,6 +19,7 @@ function log(){
 }
 
 function determinar_tipo_llamada(){
+	#Funcion que determina si el tipo de llamada es DDI, DDN o LOC. Devuelve un string con la respuesta o "NULO" si no corresponde a ninguna de las clasificaciones
 	#Param1: codigo de area de la llamada de origen
 	#Param2: codigo de area del destino
 	#Param3: codigo de pais de destino
@@ -42,6 +43,7 @@ function determinar_tipo_llamada(){
 }
 
 function rechazar_registro(){
+	#Funcion que se encarga de guardar la informacion de un registro rechazado en $RECHDIR/llamadas/$central.rech
 	#Param1: array con los datos del registro pasada por nombre
 	#Param2: mensaje con la razon del rechazo del registro
 	#Param3: nombre base del archivo que contenia al registro invalido
