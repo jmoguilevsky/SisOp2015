@@ -1,0 +1,24 @@
+General
+-------
+El comando AFREC debe ejecutarse después del comando AFINI. Se encarga de cada cierto tiempo, verificar si hay archivos nuevos en la carpeta definida para novedades, y posteriormente envía aquellos archivos que no tengan el formato esperado a una carpeta de archivos rechazados, y los archivos que cumplan con esto a una carpeta de archivos aceptados.
+
+Criterios para aceptar o rechazar un archivo de llamadas
+--------------------------------------------------------
+Para aceptar o rechazar un archivo de registros se realizan las siguientes comprobaciones, en orden. Si alguna de ellas no se cumple, finaliza la comprobación y se continúa con el siguiente archivo.
+- El archivo no debe estar vacío.
+- El archivo debe ser de texto plano.
+- El nombre del archivo debe tener el siguiente formato: XXX_YYYYMMDD.csv donde 'XXX' es el código de central (3 caracteres alfabéticos, no se admiten dígitos u otros caracteres), y 'YYYYMMDD' (sólo dígitos 1...9) es la fecha del archivo de registros. Un nombre de archivo válido podría ser, por ejemplo 'COS_20151210.csv'. Un nombre inválido podría ser 'C52_MIARCHIVO.csv0.
+- Debe existir el código de central que indica el nombre del archivo en el archivo de códigos de centrales.
+- La fecha que indica el nombre del archivo debe ser una fecha válida para el formato YYYYMMDD. Por ejemplo, '20151034' no es una fecha válida, mientras que '20140320' sí lo es.
+- La fecha debe encontrar dentro del rango especificado (Por default, desde 365 días antes de la fecha de ejecución de este comando, hasta la fecha de ejecución inclusive). El rango de fechas aceptadas puede modificarse. (Ver sección 'Opciones').
+
+
+Luego de comprobar los archivos, los archivos aceptados y rechazados son movidos a las carpetas correspondientes. Y se invoca el comando AFUMB, para la verificación de los umbrales de los registros de llamadas. 
+
+Todo este proceso se repite cada una determinada cantidad de tiempo (Por default 30 segundos), que puede modificarse.
+
+
+Opciones
+--------
+- Puede modificarse el valor de la variable SLEEP_TIME, que indica el tiempo en segundos entre cada ciclo de ejecución del comando. Su valor por default es de 30 segundos.
+- Modificando el valor de la variable DIAS_RANGO puede especificarse la cantidad de días previos a la fecha actual, desde cuando se aceptan los archivos. Su valor por default es de 365 días.

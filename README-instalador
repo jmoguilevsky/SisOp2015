@@ -1,3 +1,12 @@
+HIPOTESIS:
+
+	-Existen todos los archivos de instalación en sus respectivos directorios, tal como se los presenta en el archivo comprimido.
+	-Existe una carpeta vacia (o en el caso de haberse instalado, con un archivo .cnfg y otro .lg) llamada "conf" en el directorio de instalacion.
+
+FUNCIONES AUXILIARES USADAS:
+
+	-GraLog
+
 1.Requisitos de la instalación
 	
 	-Contar con el comando tar para la descompresion del trabajo
@@ -8,10 +17,12 @@
 2. Descompresión
 
 	-Ubicarse en la carpeta donde se desea trabajar (esta carpeta de ahora en más será indicada como $grupo)
+	-copiar el archivo comprimido a esa carpeta
 	-Ejecutar en la consola $tar -zxf grupo10.tar.gz
 
 3. Instalación
-	
+
+	(seguimos ubicados en la carpeta de trabajo ($grupo) donde ahora se encuentran AFINSTAL.sh y los componentes de instalacion)	
 	1-Dar permisos para el instaldor mediante el comando $chmod +x AFINSTAL.sh , luego iniciar el instalador: $./AFINSTAL.sh
 	2-Primero se detecta si hay alguna instalación hecha, de ser asi se la completa, sino:
 	3-Se procede a elegir todos los directorios de trabajo y valores del programa.
