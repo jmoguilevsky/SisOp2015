@@ -15,7 +15,7 @@ UMBRALES=$MAEDIR/umbral.tab
 LOGCOM="AFUMB"
 
 function log(){
-	GraLog $LOGCOM $1 $2
+	GraLog "$LOGCOM" "$1" "$2"
 }
 
 function determinar_tipo_llamada(){
@@ -24,16 +24,13 @@ function determinar_tipo_llamada(){
 	#Param2: codigo de area del destino
 	#Param3: codigo de pais de destino
 	#Param4: numero de linea de destino
+	#Se asume alguno de los parametros 2 y 3 es distino de un string vacio
 	local suma=$2$4
 	local msg_ret
-	if [ ! "$4" ]; then
-		msg_ret="NULO"
-	elif [ "$1" = "$2" ] && [ ${#suma} = 10 ]; then
+	if [ "$1" = "$2" ] && [ ${#suma} = 10 ]; then
 		msg_ret="LOC"
-	elif [ "$1" != "$2" ] && [ ${#suma} = 10 ]; then
+	elif [ "$1" != "$2" ] && [ ${#suma} = 10 ] && [ -z "$3" ]; then
 		msg_ret="DDN"
-	elif [ ! "$3" ]; then
-		msg_ret="NULO"
 	elif grep -Fqw "$3" "$CODIGOS_PAIS" && [ "$1" != "$2" ]; then
 		msg_ret="DDI"
 	else
@@ -179,6 +176,14 @@ for i in $LLAMADAS_ORDENADAS; do
 			elif [ 0 -gt "$tiempo_conversacion" ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no posee un tiempo de conversacion mayor o igual a cero." "$base"
+			#Verifico que existe solo codigo de area_b o solo codigo de pais_b
+			elif [ -z "$area_b" ] && [ -z "$pais_b" ]; then
+				cantidad_rechazados=$[cantidad_rechazados + 1]
+				rechazar_registro arr "El registro no posee ninguno de los codigos de destino." "$base"
+			#Verifico que no existan los dos codigos de destino al mismo tiempo
+			elif [ ! -z "$area_b" ] && [ ! -z "$pais_b" ]; then
+				cantidad_rechazados=$[cantidad_rechazados + 1]
+				rechazar_registro arr "El registro es invalido por poseer tanto codigo de area como de pais." "$base"
 			#Verifico que sea un tipo de llamada valido
 			elif [ "${tipo_llamada}" == 'NULO' ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
@@ -212,7 +217,8 @@ for i in $LLAMADAS_ORDENADAS; do
 			cantidad_rechazados=$[cantidad_rechazados + 1]
 		fi
 	done < "$i"
-	MoverA $ACEPDIR/$base $PROCDIR
+	mkdir -p  "$PROCDIR/proc"
+	MoverA "$ACEPDIR/$base" "$PROCDIR/proc"
 	echo "Cantidad de llamadas = $cantidad_procesados: Rechazadas $cantidad_rechazados, Con umbral $cantidad_con_umbral, Sin umbral $cantidad_sin_umbral"
 	echo "Cantidad de llamadas sospechosas = $cantidad_sospechosas, no sospechosas $cantidad_no_sospechosas"
 	log "procesados: $cantidad_procesados" "INFO"

@@ -44,6 +44,7 @@ determinar_tipo_llamada()
 	#Param2: codigo de area del destino
 	#Param3: codigo de pais de destino
 	#Param4: numero de linea de destino
+	#Se asume alguno de los parametros 2 y 3 es distino de un string vacio
 
 log()
 	#Asiste en la grabación de los resultados en el log
