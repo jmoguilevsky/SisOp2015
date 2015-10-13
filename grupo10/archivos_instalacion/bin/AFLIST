@@ -425,6 +425,33 @@ while ($true) { # para hacer mas de una consulta
         $agentes_mail{$fields[2]} = $fields[4];
     }
 
+    $file = catfile($MAEDIR, 'CdA.mae');
+    open($data, '<', $file) or 
+    die "No se pudo abrir el arhcivo '$file' $!\n";
+    
+    my %destino_ciudad;
+
+    while (my $line = <$data>) {
+        chomp $line;
+
+        # separar líneas
+        my @fields = split ";" , $line;
+        $destino_ciudad{$fields[1]} = $fields[0];
+    }
+
+    $file = catfile($MAEDIR, 'CdP.mae');
+    open($data, '<', $file) or 
+    die "No se pudo abrir el arhcivo '$file' $!\n";
+    
+    my %destino_pais;
+
+    while (my $line = <$data>) {
+        chomp $line;
+
+        # separar líneas
+        my @fields = split ";" , $line;
+        $destino_pais{$fields[0]} = $fields[1];
+    }
 
     my @salida = ();
     my @potenciales;
@@ -453,6 +480,7 @@ while ($true) { # para hacer mas de una consulta
     my  %porTipoLlamada;
     my  %porTiempoConv;
     my  %porNumerA;
+    my  %porDestino;
     my @todos = ();
 
     foreach my $archivo (@archivos_filtros){
@@ -518,6 +546,7 @@ while ($true) { # para hacer mas de una consulta
             add_if_exist_hash(\%porTipoLlamada, $llamada{'tipo_de_llamada'}, \%llamada);
             add_if_exist_hash(\%porTiempoConv, $llamada{'tiempo_de_conv'}, \%llamada);
             add_if_exist_hash(\%porNumerA, $llamada{'NumeroA'}, \%llamada);
+            add_if_exist_hash(\%porDestino, $llamada{'PaisB'}.' ' .$llamada{'AreaB'}, \%llamada);
         }
     }
 
@@ -533,7 +562,9 @@ while ($true) { # para hacer mas de una consulta
 
     my @filtros_rankings = (
         ['Central', \%porCentral, \%centrales],
-        ['Agente', \%porAgente, \%agentes_mail, \%agentes_oficina, \%agentes_id]
+        ['Agente', \%porAgente, \%agentes_mail, \%agentes_oficina, \%agentes_id],
+        ['Destino', \%porDestino, \%destino_pais, \%destino_ciudad],
+        ['Umbral', \%porUmbral]
 
     );
 
@@ -638,6 +669,8 @@ while ($true) { # para hacer mas de una consulta
         my $ranking = elegir_ranking(@filtros_rankings);
         say $ranking;
 
+        my $pais;
+        my $ciudad;
         foreach my $filtro (@filtros_rankings){
             #say @{$filtro};
             my @tupla = $filtro;
@@ -650,7 +683,11 @@ while ($true) { # para hacer mas de una consulta
                 # @claves = sort { (scalar @{%$hash_{$a}}) cmp (scalar @{%$hash_{$b}}) } @claves;
                 my @temp = ();
                 foreach my $clave (@claves){
-                    push(@temp, [$clave, scalar @{%$hash_{$clave}}] );
+                    $pais = %{@{%$hash_{$clave}}[0]}{'PaisB'};
+                    $ciudad = %{@{%$hash_{$clave}}[0]}{'AreaB'};
+                    push(@temp, [$clave, scalar @{%$hash_{$clave}}, $pais, $ciudad] );
+                    # say $pais;
+                    # say $ciudad;
                     #say $clave . ' ' . scalar @{%$hash_{$clave}};
                 }
                 #FIXME ordenar por segundos tambien
@@ -664,9 +701,30 @@ while ($true) { # para hacer mas de una consulta
                         # Mostar además del id del agente, el correo electrónico y la oficina a la que pertenece
                         my $agente = $sorted_sorted->[0];
                         say ${$tupla[0][4]}{$agente} . ' ' . ${$tupla[0][2]}{$agente} . ' ' . ${$tupla[0][3]}{$agente} . ' ' . $sorted_sorted->[1];
+                    } elsif ($tupla[0][0] eq 'Destino'){
+                        my $lugar_;
+                        if ($sorted_sorted->[2]){
+                            if (${$tupla[0][2]}{$sorted_sorted->[2]}){
+                                $lugar_ = 'Pais, ' . ${$tupla[0][2]}{$sorted_sorted->[2]} . ' ' . $sorted_sorted->[2];
+                            } else {
+                                $lugar_ = 'Pais, No se encontró el código';
+                            }
+                        } else {
+                            if (${$tupla[0][3]}{$sorted_sorted->[3]}){
+                                $lugar_ = 'Ciudad, ' . ${$tupla[0][3]}{$sorted_sorted->[3]} . ' ' . $sorted_sorted->[3];
+                            } else {
+                                $lugar_ =  'Ciudad, No se encontró el código';
+                            }
+                            
+                        }
+                        say $lugar_ . ' :' . $sorted_sorted->[1];
+                    } elsif ($tupla[0][0] eq 'Umbral'){
+                        if ($sorted_sorted->[1] >1 ){
+                            say $sorted_sorted->[0] . ': ' . $sorted_sorted->[1];
+                            
+                        }
                     }
-                }
-                #@claves = { $a cmp $b } sort @claves;
+                }#@claves = { $a cmp $b } sort @claves;
             }
         }
 
