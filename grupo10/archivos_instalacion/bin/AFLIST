@@ -14,13 +14,17 @@ my $mensajeAyuda = <<'END_MESSAGE';
 Este es el mensaje de ayuda de AFLIST.pl. 
 Para salir de programa utilize Ctrl + C
 
+Para obtener los archivos necesarios, siempre se utilizan los dirctorios
+establecidos en las variables de entorno $PROCDIR $REPODIR $MAEDIR
+
 Lista de opciones pusibles:
 
     * -h:
         Imprime este mensaje de ayuda.
     * -r:
         El resultado subconjunto de registros de llamadas sospechosas que 
-        resulta luego de la aplicación de los filtros.
+        resulta luego de la aplicación de los filtros. También puede usar como
+        entrada otro archivo anterior.
 
         Al comenzar pide una lista de archivos que usará para procesar. Estos 
         deben ser ingresados separados de espacios.
@@ -31,6 +35,7 @@ Lista de opciones pusibles:
         filtros iguales, siempre queda el mas restrictivo.
 
     * -s:
+        Realiza estadisticas de sobre los archivos de entrada.
 
 
     * -w:
@@ -467,7 +472,7 @@ sub get_archivos_subllamadas {
 
 sub get_filtro_tiempo {
     while ($true) {
-        say 'Ingrese \'f\' si desea ingresar filtro por tiempo ó \'t\' para seguir';
+        print 'Ingrese \'f\' si desea ingresar filtro por tiempo ó \'t\' para seguir';
         my @ingresa = get_aniomes('');
 
         if (scalar @ingresa == 1){
@@ -484,7 +489,7 @@ sub get_filtro_tiempo {
 
 sub get_segundos_llamada{
     while ($true) {
-        say 'Ingrese \'s\' si desea ordenar por tiempo ó \'l\' por llamadas: ';
+        print 'Ingrese \'s\' si desea ordenar por tiempo ó \'l\' por llamadas: ';
         my @ingresa = get_aniomes('');
 
         if (scalar @ingresa == 1){
@@ -675,6 +680,8 @@ while ($true) { # para hacer mas de una consulta
             $llamada{'AreaB'} = $fields[9];
             $llamada{'NumeroB'} = $fields[10];
             $llamada{'FechaArchivo'} = $fields[11];
+
+            $llamada{'Destino'} = $llamada{'PaisB'}.' ' .$llamada{'AreaB'};
             
 
 
@@ -700,7 +707,8 @@ while ($true) { # para hacer mas de una consulta
         ['Agente', \%porAgente],
         ['umbral', \%porUmbral],
         ['Tipo de llamada', \%porTipoLlamada],
-        ['NumeroA', \%porNumerA]
+        ['NumeroA', \%porNumerA],
+        ['Destino', \%porDestino]
     );
 
     my @filtros_rankings = (
@@ -840,10 +848,10 @@ while ($true) { # para hacer mas de una consulta
         foreach my $filtro (@filtros_rankings){
             #say @{$filtro};
             my @tupla = $filtro;
-            say $tupla[0][0];
+            #say $tupla[0][0];
             if ($tupla[0][0] eq $ranking){
                 #has analizar está en -> $tupla[0][1]
-                say 'eligio ' . $tupla[0][0];
+                #say 'eligio ' . $tupla[0][0];
                 my $segundos;
                 if ($tupla[0][0] eq 'Agente' or $tupla[0][0] eq 'Central'){
                     say 'debo elegir segundos  llamadas';
