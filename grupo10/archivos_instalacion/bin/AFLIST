@@ -6,12 +6,9 @@ use strict;
 use warnings;
 use File::Spec::Functions;
 
+
 #FIXME Agregar filtrar por rango
-#FIXME Permitir input de archivos de sub llamada
-#FIXME Sacar el Uno todos varios aniomes
-#FIXME que no se puedan abrir dos de estos procesos
-#FIXME obtener oficinas?
-#NOTE chequear expresiones regulares viejas
+
 
 my $mensajeAyuda = <<'END_MESSAGE';
 Este es el mensaje de ayuda de AFLIST.pl. 
@@ -72,7 +69,7 @@ sub una_varias_todas {
     my $succes;
 
     while ($true) {
-        print 'Una, varia ó todas (ingrese la primera letra): ';
+        print 'varia ó todas (ingrese la primera letra): ';
 
         my $in = readline(*STDIN);
 
@@ -187,6 +184,7 @@ sub get_aniomes {
             }         
         } else {
             say 'Debe ingresar por lo menos un caracter';
+
         }
 
     }
@@ -351,7 +349,6 @@ sub elegir_filtro {
     my $result = una_varias_todas();
 
 
-    
     if ($result eq (MYENUM)[VARIAS]) {
         say 'A continuación opciones posibles: ';
         foreach (@lista_posibilidades){
@@ -363,6 +360,8 @@ sub elegir_filtro {
     } elsif (($result eq (MYENUM)[TODAS])) {
         return @lista_posibilidades;
     }
+    
+    
 
     # si varias () elegir
 
@@ -463,6 +462,37 @@ sub get_archivos_subllamadas {
         # NoFilter
         say 'todas';     
         return @archivos;
+    }
+}
+
+sub get_filtro_tiempo{
+    while ($true) {
+        say 'Ingrese \'f\' si desea ingresar filtro por tiempo ó \'t\' para seguir';
+        my @ingresa = get_aniomes('');
+
+        if (scalar @ingresa == 1){
+            if ($ingresa[0] eq 'f'){
+                return $true;
+            } elsif ($ingresa[0] eq 't'){
+                return $false;
+            }
+        }
+
+    }
+
+}
+
+sub pedir_bordes{
+    while ($true) {
+        say 'Ingrese los números max y min, separados por un espacio';
+        my @ingresa = get_aniomes('');
+
+        if (scalar @ingresa == 2){
+            if ($ingresa[0] < $ingresa[1]){
+                return @ingresa;
+            }
+        }
+
     }
 }
 
@@ -723,6 +753,32 @@ while ($true) { # para hacer mas de una consulta
 
         }
 
+        #NOTE Filtro por tiempo de llamada
+
+        @salida = ();
+        my $filtro_tiempo = get_filtro_tiempo();
+        # # si puso el filtro
+        if ($filtro_tiempo){
+            my @bordes = pedir_bordes();
+            # pedir bordes
+            say $bordes[0].' '.$bordes[1];
+            foreach my $llamada (@potenciales){
+        #         # split
+                my @fields_s = split ";" , $llamada;
+                my $tiempo = $fields_s[5];
+                # verificar
+                # say $tiempo;
+                if ($tiempo > $bordes[0]  and $tiempo < $bordes[1]){
+                    # si pasa, agragar a salida
+                    push(@salida, $llamada);
+                }
+            }
+            @potenciales = @salida;
+            
+        }
+        
+
+
         #   Filtro por tiempo de conversación (rango)
 
         if ($write){
@@ -751,7 +807,6 @@ while ($true) { # para hacer mas de una consulta
             }
         }
         say 'Cantidad total en esta consulta: ' .  scalar @potenciales;
-        #FIXME falta imprimir los potenciales
 
     }
 
@@ -901,31 +956,13 @@ sub get_new_filename {
 }
  
 
-# cada uno de estos fultros va a ser un hash.
-# después aplicamos los filtros y metemos todo en un set. Y printiamos el set.
+#FIXME rangos consulta
+#FIXME total
+#FIXME filtro que falta en estadisticas
+#FIXME guardar en estadística
+#FIXME no leer proc
 
-# say "What is your name? ";
-# my $name = <STDIN>;
-# chomp $name;
-
-# say "Hello $name, how are you?";
-
-# Parse options (-h, -r, -w, -s)
-
-
-#FIXME ¿como pongo los varios filtros que me pida?
-
-# -h no puede tener otro comando
-# -r solo puede estar con -w
-# -s solo puede estar con -w
-
-# my $filename = "$MAEDIR/CdP.mae";
-
-# open(my $fh, '<:encoding(UTF-8)', $filename)
-#   or die "Could not open file '$filename' $!";
- 
-# while (my $row = <$fh>) {
-#   chomp $row;
-#   print "$row\n";
-# }
-
+#FIXME que no se puedan abrir dos de estos procesos
+#FIXME obtener oficinas?
+#NOTE chequear expresiones regulares viejas
+#FIXME Sacar el Uno todos varios aniomes
