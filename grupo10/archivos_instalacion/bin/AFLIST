@@ -10,7 +10,9 @@ use File::Spec::Functions;
 #FIXME Permitir input de archivos de sub llamada
 #FIXME Mejorar ?
 #FIXME Sacar el Uno
-
+#FIXME que no se puedan abrir dos de estos
+#FIXME uno todos varios aniomes
+#FIXME obtener oficinas?
 #NOTE chequear expresiones regulares viejas
 
 my $mensajeAyuda = <<'END_MESSAGE';
@@ -389,8 +391,40 @@ sub hash_to_text {
 }
 
 while ($true) { # para hacer mas de una consulta
-    #NOTE Acá empezaba el if
-    #
+    
+    #NOTE Cargar hashes
+
+    my $file = catfile($MAEDIR, 'centrales.mae');
+    open(my $data, '<', $file) or 
+    die "No se pudo abrir el arhcivo '$file' $!\n";
+    my  %centrales;
+    while (my $line = <$data>) {
+        chomp $line;
+
+        # separar líneas
+        my @fields = split ";" , $line;
+        $centrales{$fields[0]} = $fields[1];
+    }
+
+    $file = catfile($MAEDIR, 'agentes.mae');
+    open($data, '<', $file) or 
+    die "No se pudo abrir el arhcivo '$file' $!\n";
+    
+    my  %agentes_oficina;
+    my  %agentes_mail;
+    my  %agentes_id;
+
+
+    while (my $line = <$data>) {
+        chomp $line;
+
+        # separar líneas
+        my @fields = split ";" , $line;
+        $agentes_id{$fields[2]} = $fields[0];
+        $agentes_oficina{$fields[2]} = $fields[3];
+        $agentes_mail{$fields[2]} = $fields[4];
+    }
+
 
     my @salida = ();
     my @potenciales;
@@ -497,6 +531,12 @@ while ($true) { # para hacer mas de una consulta
         ['NumeroA', \%porNumerA]
     );
 
+    my @filtros_rankings = (
+        ['Central', \%porCentral, \%centrales],
+        ['Agente', \%porAgente, \%agentes_mail, \%agentes_oficina, \%agentes_id]
+
+    );
+
     @potenciales = @todos;
     if ($consulta){
         say 'Empezamos por los filtros: ';
@@ -556,6 +596,7 @@ while ($true) { # para hacer mas de una consulta
             #itero uno por uno y me fijo si está.
 
         }
+
         #   Filtro por tiempo de conversación (rango)
 
         if ($write){
@@ -583,9 +624,104 @@ while ($true) { # para hacer mas de una consulta
                 say $llamadat;
             }
         }
+        #FIXME falta imprimir los potenciales
 
-        say "    -\nEmpieza nueva consulta";
     }
+
+    if ($stats){
+
+
+
+
+        # elegir el ranking, seleccionando filtros de @filtros
+        #FIXME necesitamos mas filtros, for real
+        my $ranking = elegir_ranking(@filtros_rankings);
+        say $ranking;
+
+        foreach my $filtro (@filtros_rankings){
+            #say @{$filtro};
+            my @tupla = $filtro;
+            say $tupla[0][0];
+            if ($tupla[0][0] eq $ranking){
+                #has analizar está en -> $tupla[0][1]
+                say 'eligio ' . $tupla[0][0];
+                my $hash_ = $tupla[0][1];
+                my @claves = keys %$hash_;
+                # @claves = sort { (scalar @{%$hash_{$a}}) cmp (scalar @{%$hash_{$b}}) } @claves;
+                my @temp = ();
+                foreach my $clave (@claves){
+                    push(@temp, [$clave, scalar @{%$hash_{$clave}}] );
+                    #say $clave . ' ' . scalar @{%$hash_{$clave}};
+                }
+                #FIXME ordenar por segundos tambien
+                @temp = sort {$b->[1] <=> $a->[1]} @temp;
+
+                say 'ordenadas';
+                foreach my $sorted_sorted (@temp){
+                    if ($tupla[0][0] eq 'Central') {
+                        say ${$tupla[0][2]}{$sorted_sorted->[0]} . ' (' . $sorted_sorted->[0] . '): ' . $sorted_sorted->[1];
+                    } elsif ($tupla[0][0] eq 'Agente'){
+                        # Mostar además del id del agente, el correo electrónico y la oficina a la que pertenece
+                        my $agente = $sorted_sorted->[0];
+                        say ${$tupla[0][4]}{$agente} . ' ' . ${$tupla[0][2]}{$agente} . ' ' . ${$tupla[0][3]}{$agente} . ' ' . $sorted_sorted->[1];
+                    }
+                }
+                #@claves = { $a cmp $b } sort @claves;
+            }
+        }
+
+        # agarrars el hash, ordenas las claves por cual tiene mas cantidades
+        # imprimis en orden, buscando los nombres de verdad 
+
+        # sort { $a cmp $b } @words;
+    }
+
+    say "    -\nEmpieza nueva consulta";
+}
+
+sub elegir_ranking {
+    my @lista_posibilidades = (@_);
+
+    my @opciones = ();
+
+    say 'Seleccionar Ranking a ejectuar, escribir en la consola las siguentes opciones: ';
+    foreach my $filtro (@lista_posibilidades){
+        #say @{$filtro};
+        my @tupla = $filtro;
+        push(@opciones, $tupla[0][0]);
+        print $tupla[0][0] . ', ';
+    }
+
+    say '';
+
+    while ($true) {
+        my @eligio = get_aniomes('Indique la elegida: ');
+        if (scalar @eligio != 1){
+            say 'Elija solo una opción';
+        } else {
+            my $opcion = $eligio[0];
+            # si la opción está en
+            # if (not grep $_ eq $archivo, @filtered_list ){
+            if (grep $_ eq $opcion, @opciones){
+                return $opcion;
+            }
+        }
+    }
+    # my $result = una_varias_todas();
+
+
+    
+    # if ($result eq (MYENUM)[VARIAS]) {
+    #     say 'A continuación opciones posibles: ';
+    #     foreach (@lista_posibilidades){
+    #         print $_.', ';
+    #     }
+    #     print "\n";
+    #     my @filtros = get_aniomes('Ingrese los filtros usando las opciones atenriores (separados por espacios): ');
+    #     return @filtros;
+    # } elsif (($result eq (MYENUM)[TODAS])) {
+    #     return @lista_posibilidades;
+    # }
 
 }
 
