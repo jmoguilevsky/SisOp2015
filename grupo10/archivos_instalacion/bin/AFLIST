@@ -203,7 +203,7 @@ sub get_archivos_carpetas {
     my $filename;
     while ($filename = readdir(DIR)) {
         # acá hay que filtrar . y ..
-        if ($filename ne '.' and $filename ne '..') {
+        if ($filename ne '.' and $filename ne '..' and $filename ne 'proc') {
             # print $filename , "\n";
             push (@filelist,$filename);
         }
@@ -465,7 +465,7 @@ sub get_archivos_subllamadas {
     }
 }
 
-sub get_filtro_tiempo{
+sub get_filtro_tiempo {
     while ($true) {
         say 'Ingrese \'f\' si desea ingresar filtro por tiempo ó \'t\' para seguir';
         my @ingresa = get_aniomes('');
@@ -474,6 +474,23 @@ sub get_filtro_tiempo{
             if ($ingresa[0] eq 'f'){
                 return $true;
             } elsif ($ingresa[0] eq 't'){
+                return $false;
+            }
+        }
+
+    }
+
+}
+
+sub get_segundos_llamada{
+    while ($true) {
+        say 'Ingrese \'s\' si desea ordenar por tiempo ó \'l\' por llamadas: ';
+        my @ingresa = get_aniomes('');
+
+        if (scalar @ingresa == 1){
+            if ($ingresa[0] eq 's'){
+                return $true;
+            } elsif ($ingresa[0] eq 'l'){
                 return $false;
             }
         }
@@ -495,6 +512,7 @@ sub pedir_bordes{
 
     }
 }
+
 
 while ($true) { # para hacer mas de una consulta
     
@@ -829,6 +847,12 @@ while ($true) { # para hacer mas de una consulta
             if ($tupla[0][0] eq $ranking){
                 #has analizar está en -> $tupla[0][1]
                 say 'eligio ' . $tupla[0][0];
+                my $segundos;
+                if ($tupla[0][0] eq 'Agente' or $tupla[0][0] eq 'Central'){
+                    say 'debo elegir segundos  llamadas';
+                    $segundos = get_segundos_llamada();
+
+                }
                 my $hash_ = $tupla[0][1];
                 my @claves = keys %$hash_;
                 # @claves = sort { (scalar @{%$hash_{$a}}) cmp (scalar @{%$hash_{$b}}) } @claves;
@@ -836,7 +860,16 @@ while ($true) { # para hacer mas de una consulta
                 foreach my $clave (@claves){
                     $pais = %{@{%$hash_{$clave}}[0]}{'PaisB'};
                     $ciudad = %{@{%$hash_{$clave}}[0]}{'AreaB'};
-                    push(@temp, [$clave, scalar @{%$hash_{$clave}}, $pais, $ciudad] );
+                    my $contador;
+                    if ($segundos){
+                        $contador = 0;
+                        foreach my $llamada_temp (@{%$hash_{$clave}}){
+                            $contador = $contador + %$llamada_temp{'tiempo_de_conv'};
+                        }
+                    } else {
+                        $contador = scalar @{%$hash_{$clave}};
+                    }
+                    push(@temp, [$clave, $contador, $pais, $ciudad] );
                     # say $pais;
                     # say $ciudad;
                     #say $clave . ' ' . scalar @{%$hash_{$clave}};
@@ -956,11 +989,9 @@ sub get_new_filename {
 }
  
 
-#FIXME rangos consulta
-#FIXME total
+#FIXME falta un filtro (que si se puede hacer, en consulta)
 #FIXME filtro que falta en estadisticas
 #FIXME guardar en estadística
-#FIXME no leer proc
 
 #FIXME que no se puedan abrir dos de estos procesos
 #FIXME obtener oficinas?
