@@ -8,15 +8,14 @@ use File::Spec::Functions;
 
 #FIXME Agregar filtrar por rango
 #FIXME Permitir input de archivos de sub llamada
-#FIXME Mejorar ?
-#FIXME Sacar el Uno
-#FIXME que no se puedan abrir dos de estos
-#FIXME uno todos varios aniomes
+#FIXME Sacar el Uno todos varios aniomes
+#FIXME que no se puedan abrir dos de estos procesos
 #FIXME obtener oficinas?
 #NOTE chequear expresiones regulares viejas
 
 my $mensajeAyuda = <<'END_MESSAGE';
-Este es el mensaje de ayuda de AFLIST.pl.
+Este es el mensaje de ayuda de AFLIST.pl. 
+Para salir de programa utilize Ctrl + C
 
 Lista de opciones pusibles:
 
@@ -378,7 +377,7 @@ sub hash_to_text {
     my $llamadat = shift;
     return ${$llamadat}{'central'} . ';' . 
     ${$llamadat}{'agente'} . ';' . 
-    ${$llamadat}{'umbral'} . ' ' . 
+    ${$llamadat}{'umbral'} . ';' . 
     ${$llamadat}{'tipo_de_llamada'} . ';' .
     ${$llamadat}{'inicioLlamada'} . ';' .
     ${$llamadat}{'tiempo_de_conv'} . ';' .
@@ -388,6 +387,83 @@ sub hash_to_text {
     ${$llamadat}{'AreaB'} . ';' .
     ${$llamadat}{'NumeroB'} . ';' .
     ${$llamadat}{'FechaArchivo'};
+}
+
+
+sub subllamadas_archivos {
+
+    while ($true) {
+        say 'Presiones \'s\' para subllamadas ó \'o\' para archivos de oficinas';
+        my $in = readline(*STDIN);
+
+        if ($in){
+
+            chomp $in;
+            my @options = split / /, $in;
+
+            # say $options[0];
+
+            if (scalar @options == 1){
+                if ($options[0] eq 's'){
+                    return $true;
+                } elsif ($options[0] eq 'o'){
+                    return $false;
+                }
+            }         
+        }
+        say 'Debe ingresar por lo menos un caracter y solo una opción';
+       
+
+    }
+    # body...
+}
+
+sub get_archivos_subllamadas {
+    # input: a list of files
+    # out: all files that matches input
+    # opciones
+    my (@archivos) = (@_);
+    # my (@archivos) = @_;
+    my $result = una_varias_todas();
+
+    my @filtered_list = ();
+
+    if ($result eq (MYENUM)[UNA]){
+        say 'una, no debería existir esto, es lo mismo que varias';
+        
+        get_aniomes(); # pedimos solo una
+        # pido un anio mes
+
+    } elsif ($result eq (MYENUM)[VARIAS]) {
+        say 'varias'; # pedimos mas de una
+        # pido un anio mes anio mes anio mes ...
+        my @filtros = get_aniomes('Ingrese el número subllamada.NNN: ');
+        
+        # my $archivo; my $filtro;
+        foreach my $archivo (@archivos){
+            foreach my $filtro (@filtros){
+                # say $filtro . ' ' . $archivo;
+                #say '/\w*'."$filtro".'_\d+\b';
+                #if ($archivo =~ "$filtro".'_\d+\b'){
+                # say $archivo;
+                if ($archivo =~ "subllamada\.$filtro\\b"){
+                    # agregamos solo los que pasan el filtro
+                    if (not grep $_ eq $archivo, @filtered_list ){
+                        say $archivo;
+                        push (@filtered_list, $archivo);
+
+                    }
+                    # say 'paso ' . $filtro . ' ' . $archivo;
+                }
+            }
+        }
+        return @filtered_list;
+
+    } elsif ($result eq (MYENUM)[TODAS]) {
+        # NoFilter
+        say 'todas';     
+        return @archivos;
+    }
 }
 
 while ($true) { # para hacer mas de una consulta
@@ -455,12 +531,31 @@ while ($true) { # para hacer mas de una consulta
 
     my @salida = ();
     my @potenciales;
-    my @archivos_filtros = get_archivos_carpetas($PROCDIR);
-    
-    say "filtros por oficina";
-    @archivos_filtros = filtrar_oficina(@archivos_filtros);
-    say "Filtros por aniomes";
-    @archivos_filtros = filtrar(@archivos_filtros);
+
+
+    # subllamadas o archivos
+    my @archivos_filtros;
+
+    my $subllamadas = subllamadas_archivos();
+    my $directorio;
+
+    if ($subllamadas){
+        @archivos_filtros = get_archivos_carpetas($REPODIR);
+        @archivos_filtros = get_archivos_subllamadas(@archivos_filtros);
+        $directorio = $REPODIR;
+    } else {
+        @archivos_filtros = get_archivos_carpetas($PROCDIR);
+        
+        say "filtros por oficina";
+        @archivos_filtros = filtrar_oficina(@archivos_filtros);
+        say "Filtros por aniomes";
+        @archivos_filtros = filtrar(@archivos_filtros);
+
+        $directorio = $PROCDIR;
+    }
+
+
+
 
     # @archivos_filtros = filtrar(@archivos_filtros);
 
@@ -486,7 +581,7 @@ while ($true) { # para hacer mas de una consulta
     foreach my $archivo (@archivos_filtros){
         # abrir el archivo
         # iteramos y llenamos 5 ha
-        my $file = catfile($PROCDIR, $archivo);
+        my $file = catfile($directorio, $archivo);
         say 'abrí archivo ' . $file;
         
     # abrimos el archivo
@@ -638,7 +733,7 @@ while ($true) { # para hacer mas de una consulta
             or die "No se pudo abrir el archivo $filename";
 
             #escribir
-            say "escribo en $filename";
+            # say "escribo en $filename";
             foreach my $llamadat (@potenciales){
 
                 print $fh ($llamadat . "\n");
@@ -655,6 +750,7 @@ while ($true) { # para hacer mas de una consulta
                 say $llamadat;
             }
         }
+        say 'Cantidad total en esta consulta: ' .  scalar @potenciales;
         #FIXME falta imprimir los potenciales
 
     }
@@ -724,6 +820,7 @@ while ($true) { # para hacer mas de una consulta
                             
                         }
                     }
+                    #TODO TIPOS de llamada
                 }#@claves = { $a cmp $b } sort @claves;
             }
         }
@@ -787,11 +884,11 @@ sub get_new_filename {
     my @candidates = get_archivos_carpetas($REPODIR);
     my $max = -1;
     foreach my $filename (@candidates){
-        say $filename;
+        # say $filename;
         if ($filename =~ s/subllamada\.(\d+)$//g){
             #my $numero =~ s/[^0-9]//g;
             my $numero = $1;
-            say 'numero '. $numero;
+            # say 'numero '. $numero;
             if ($numero > $max){
                 $max = $numero + 0;
             }
