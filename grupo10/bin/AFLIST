@@ -1,0 +1,776 @@
+#!/usr/bin/perl
+
+
+use 5.010;
+use strict;
+use warnings;
+use File::Spec::Functions;
+
+#FIXME Agregar filtrar por rango
+#FIXME Permitir input de archivos de sub llamada
+#FIXME Mejorar ?
+#FIXME Sacar el Uno
+#FIXME que no se puedan abrir dos de estos
+#FIXME uno todos varios aniomes
+#FIXME obtener oficinas?
+#NOTE chequear expresiones regulares viejas
+
+my $mensajeAyuda = <<'END_MESSAGE';
+Este es el mensaje de ayuda de AFLIST.pl.
+
+Lista de opciones pusibles:
+
+    * -h:
+        Imprime este mensaje de ayuda.
+    * -r:
+        El resultado subconjunto de registros de llamadas sospechosas que 
+        resulta luego de la aplicación de los filtros.
+
+        Al comenzar pide una lista de archivos que usará para procesar. Estos 
+        deben ser ingresados separados de espacios.
+
+        Luego preguntará por filtros a aplicar. Se deberá ingresar a abreviación
+        de cada, de a una por vez. Una vez ingresada esta abreviación, procederá
+        a mostrar una lista de opciones las cuales serán. Si vuelve a elegir dos
+        filtros iguales, siempre queda el mas restrictivo.
+
+    * -s:
+
+
+    * -w:
+        Esta flag se puede usar opcionalmente con las flags -h y -r.
+        Grabar el resultado en un archivo con nombre a elección, pero no
+        sobreescribir ningún resultado previo
+END_MESSAGE
+
+
+use constant MYENUM => qw(UNA VARIAS TODAS);
+BEGIN {
+    eval "use constant (MYENUM)[$_] => $_;" foreach 0..(MYENUM)-1;
+}
+
+my $false = 0;
+my $true = 1;
+
+# Hay que configurar estas variables
+my $PROCDIR = $ENV{PROCDIR};
+my $REPODIR = $ENV{REPODIR};
+my $MAEDIR = $ENV{MAEDIR};
+
+# say $PROCDIR;
+# say $REPODIR;
+# say $MAEDIR;
+
+# Empieza el procesamiento de la entrada
+
+sub error_parametros {
+    say 'Parámetros inválidos, use -h para ver la ayuda.';
+    exit 0;
+}
+
+sub una_varias_todas {
+
+    my $succes;
+
+    while ($true) {
+        print 'Una, varia ó todas (ingrese la primera letra): ';
+
+        my $in = readline(*STDIN);
+
+        if ($in){
+            chomp $in;
+            my @options = split / /, $in;
+
+            # say $options[0];
+
+            if (scalar @options != 1){
+                say 'Solo una opción es posible.';
+            } else {
+                $options[0] = lc $options[0];
+                if ($options[0] eq 'u'){
+                    return (MYENUM)[UNA];
+                } elsif ($options[0] eq 'v') {
+                    return (MYENUM)[VARIAS];
+                } elsif ($options[0] eq 't') {
+                    return (MYENUM)[TODAS];
+                }
+            }            
+        } else {
+            say '';
+            say 'Debe ingresar por lo menos un caracter';
+        }
+
+    }
+}
+
+
+
+my $write = 0;
+my $consulta = 0;
+my $stats = 0;
+
+my %params = map { $_ => 1 } @ARGV;
+
+
+if (exists($params{'-h'})) { 
+    if (scalar (@ARGV) !=1 ) {
+        error_parametros();
+        exit 1;
+    }
+    say $mensajeAyuda;
+    exit 0;
+}
+
+# si llegamos hasta acá, la entrada ya no puede haber -h en la entrada
+
+if(exists($params{'-r'})) { 
+    if (scalar (@ARGV) == 1) {
+        $consulta = 1;
+        
+    } elsif (scalar (@ARGV) == 2) {
+        if (exists($params{'-w'})) {
+            $consulta = 1;
+            $write = 1;
+        } else {
+            error_parametros();
+        }
+
+    } else {
+        error_parametros();
+    }
+
+    # exit 0;
+} elsif(exists($params{'-s'})) { 
+    if (scalar (@ARGV) == 1) {
+        $stats = 1;
+        
+    } elsif (scalar (@ARGV) == 2) {
+        if (exists($params{'-w'})) {
+            $stats = 1;
+            $write = 1;
+        } else {
+            error_parametros();
+        }
+
+    } else {
+        error_parametros();
+    }
+
+    # exit 0;
+} else {
+    error_parametros();
+}
+
+
+sub get_aniomes {
+
+
+    my ($texto) = @_;
+    # input, cantidad de pares a encontrar
+
+    # salida, lista de anios meses
+
+    while ($true) {
+        # FIXME UNA Y todos es lo mismo
+        print $texto;
+
+        my $in = readline(*STDIN);
+
+        if ($in){
+
+            chomp $in;
+            my @options = split / /, $in;
+
+            # say $options[0];
+
+            if (scalar @options != 0){
+                return @options;
+            }         
+        } else {
+            say 'Debe ingresar por lo menos un caracter';
+        }
+
+    }
+
+}
+
+
+sub get_archivos_carpetas {
+    # http://linuxpoison.blogspot.com.ar/2013/01/perl-script-reading-list-of-files-from.html
+    my ($nombre_carpeta) = @_;
+
+    opendir(DIR, $nombre_carpeta) || die "Problema al abrir el directorio $nombre_carpeta\n";
+
+    #@filelist = readdir(DIR);
+    my @filelist = ();
+    my $filename;
+    while ($filename = readdir(DIR)) {
+        # acá hay que filtrar . y ..
+        if ($filename ne '.' and $filename ne '..') {
+            # print $filename , "\n";
+            push (@filelist,$filename);
+        }
+    }
+    closedir(DIR);
+    return @filelist;
+}
+
+
+
+sub filtrar {
+    # input: a list of files
+    # out: all files that matches input
+    # opciones
+    my (@archivos) = (@_);
+    # my (@archivos) = @_;
+    my $result = una_varias_todas();
+
+    my @filtered_list = ();
+
+    if ($result eq (MYENUM)[UNA]){
+        say 'una, no debería existir esto, es lo mismo que varias';
+        
+        get_aniomes(); # pedimos solo una
+        # pido un anio mes
+
+    } elsif ($result eq (MYENUM)[VARIAS]) {
+        say 'varias'; # pedimos mas de una
+        # pido un anio mes anio mes anio mes ...
+        my @filtros = get_aniomes('Ingrese los filtros como aniomes (separados por espacios): ');
+        
+        # my $archivo; my $filtro;
+        foreach my $archivo (@archivos){
+            foreach my $filtro (@filtros){
+                # say $filtro . ' ' . $archivo;
+                #if ($archivo =~ '\w*_'.$filtro.'\$'){
+                if ($archivo =~ "\\w*_$filtro\$"){
+                    # agregamos solo los que pasan el filtro
+                    # if (not exists($filtered_list{$archivo}) {
+
+                    # }
+                    if (not grep $_ eq $archivo, @filtered_list ){
+                        push (@filtered_list, $archivo);
+
+                    }
+
+                    # say 'paso' . $filtro . ' ' . $archivo;
+                }
+            }
+        }
+        return @filtered_list;
+
+    } elsif ($result eq (MYENUM)[TODAS]) {
+        # NoFilter
+        say 'todas';     
+        return @archivos;
+    }
+}
+
+sub filtrar_oficina {
+    # input: a list of files
+    # out: all files that matches input
+    # opciones
+    my (@archivos) = (@_);
+    # my (@archivos) = @_;
+    my $result = una_varias_todas();
+
+    my @filtered_list = ();
+
+    if ($result eq (MYENUM)[UNA]){
+        say 'una, no debería existir esto, es lo mismo que varias';
+        
+        get_aniomes(); # pedimos solo una
+        # pido un anio mes
+
+    } elsif ($result eq (MYENUM)[VARIAS]) {
+        say 'varias'; # pedimos mas de una
+        # pido un anio mes anio mes anio mes ...
+        my @filtros = get_aniomes('Ingrese los filtros como oficina (separados por espacios): ');
+        
+        # my $archivo; my $filtro;
+        foreach my $archivo (@archivos){
+            foreach my $filtro (@filtros){
+                # say $filtro . ' ' . $archivo;
+                #say '/\w*'."$filtro".'_\d+\b';
+                #if ($archivo =~ "$filtro".'_\d+\b'){
+                if ($archivo =~ "^$filtro\_"){
+                    # agregamos solo los que pasan el filtro
+                    if (not grep $_ eq $archivo, @filtered_list ){
+                        push (@filtered_list, $archivo);
+
+                    }
+                    # say 'paso ' . $filtro . ' ' . $archivo;
+                }
+            }
+        }
+        return @filtered_list;
+
+    } elsif ($result eq (MYENUM)[TODAS]) {
+        # NoFilter
+        say 'todas';     
+        return @archivos;
+    }
+}
+
+sub add_if_exist_hash {
+    # variables
+    # my ($hash, $key, $value) = (@_);
+    #my %hash = %{shift()};
+    my $hash = shift;
+    my $key = shift;
+    my %value = %{shift()};
+    
+    # if (not value in hash){
+    #     $hash{} = array
+    # }
+
+    # my $incoming_hash_ref = shift;
+    # $incoming_hash_ref->{'e'} = 'f';
+    
+    if (not exists $hash->{$key}){
+        $hash->{$key} = [];
+        # say 'No existe';
+        #say "tamaño de el array". scalar @{$hash{$key}};
+    } else {
+        # say 'existe';
+    }
+    
+    push(@{$hash->{$key}}, \%value);
+    #say 'lo que está en el archivo'.%value{'central'};
+    #say "tamaño de el array". scalar @{$hash->{$key}};
+    # append llamada to list
+}
+
+sub elegir_filtro {
+    my $nombre = shift;
+    my $hash = shift;
+
+    my @lista_posibilidades = keys %$hash;
+
+    say 'Seleccionar filtros por ' . $nombre;
+
+    my $result = una_varias_todas();
+
+
+    
+    if ($result eq (MYENUM)[VARIAS]) {
+        say 'A continuación opciones posibles: ';
+        foreach (@lista_posibilidades){
+            print $_.', ';
+        }
+        print "\n";
+        my @filtros = get_aniomes('Ingrese los filtros usando las opciones atenriores (separados por espacios): ');
+        return @filtros;
+    } elsif (($result eq (MYENUM)[TODAS])) {
+        return @lista_posibilidades;
+    }
+
+    # si varias () elegir
+
+    # si todas
+    #     retornar
+
+
+}
+
+
+sub hash_to_text {
+    my $llamadat = shift;
+    return ${$llamadat}{'central'} . ';' . 
+    ${$llamadat}{'agente'} . ';' . 
+    ${$llamadat}{'umbral'} . ' ' . 
+    ${$llamadat}{'tipo_de_llamada'} . ';' .
+    ${$llamadat}{'inicioLlamada'} . ';' .
+    ${$llamadat}{'tiempo_de_conv'} . ';' .
+    ${$llamadat}{'AreaA'} . ';' . 
+    ${$llamadat}{'NumeroA'} . ';' .
+    ${$llamadat}{'PaisB'} . ';' .
+    ${$llamadat}{'AreaB'} . ';' .
+    ${$llamadat}{'NumeroB'} . ';' .
+    ${$llamadat}{'FechaArchivo'};
+}
+
+while ($true) { # para hacer mas de una consulta
+    
+    #NOTE Cargar hashes
+
+    my $file = catfile($MAEDIR, 'centrales.mae');
+    open(my $data, '<', $file) or 
+    die "No se pudo abrir el arhcivo '$file' $!\n";
+    my  %centrales;
+    while (my $line = <$data>) {
+        chomp $line;
+
+        # separar líneas
+        my @fields = split ";" , $line;
+        $centrales{$fields[0]} = $fields[1];
+    }
+
+    $file = catfile($MAEDIR, 'agentes.mae');
+    open($data, '<', $file) or 
+    die "No se pudo abrir el arhcivo '$file' $!\n";
+    
+    my  %agentes_oficina;
+    my  %agentes_mail;
+    my  %agentes_id;
+
+
+    while (my $line = <$data>) {
+        chomp $line;
+
+        # separar líneas
+        my @fields = split ";" , $line;
+        $agentes_id{$fields[2]} = $fields[0];
+        $agentes_oficina{$fields[2]} = $fields[3];
+        $agentes_mail{$fields[2]} = $fields[4];
+    }
+
+
+    my @salida = ();
+    my @potenciales;
+    my @archivos_filtros = get_archivos_carpetas($PROCDIR);
+    
+    say "filtros por oficina";
+    @archivos_filtros = filtrar_oficina(@archivos_filtros);
+    say "Filtros por aniomes";
+    @archivos_filtros = filtrar(@archivos_filtros);
+
+    # @archivos_filtros = filtrar(@archivos_filtros);
+
+    if (scalar @archivos_filtros == 0){
+        say "Warning: La selección de filtros no dejó ningún archivo para consultar."
+    }
+
+    # foreach (@archivos_filtros){
+    #     say $_;
+    # }
+
+    # para cada línea
+    # Creamos los 6 hashes
+    my  %porCentral;
+    my  %porAgente;
+    my  %porUmbral;
+    my  %porTipoLlamada;
+    my  %porTiempoConv;
+    my  %porNumerA;
+    my @todos = ();
+
+    foreach my $archivo (@archivos_filtros){
+        # abrir el archivo
+        # iteramos y llenamos 5 ha
+        my $file = catfile($PROCDIR, $archivo);
+        say 'abrí archivo ' . $file;
+        
+    # abrimos el archivo
+        open(my $data, '<', $file) or 
+        die "No se pudo abrir el arhcivo '$file' $!\n";
+        
+
+
+        while (my $line = <$data>) {
+            chomp $line;
+
+            # separar líneas
+            my @fields = split ";" , $line;
+            #say '      linea';
+
+            #say $fields[2];
+
+            # modelamos la llamada
+            # 0centra
+            # 1algente
+            # 2idumbral
+            # 3Tipo de llamada
+            # 4Inicio de llamada
+            # 5Tiempo
+            # 6AreaA
+            # 7NumeroA
+            # 8PaisB
+            # 9AreaB
+            # 10NumeroB
+            # 11Fecha
+            my  %llamada;
+            $llamada{'central'} = $fields[0];
+            $llamada{'agente'} = $fields[1];
+            $llamada{'umbral'} = $fields[2];
+            $llamada{'tipo_de_llamada'} = $fields[3];
+            $llamada{'tiempo_de_conv'} = $fields[5];
+            $llamada{'NumeroA'} = $fields[6] . $fields[7];
+            
+            $llamada{'inicioLlamada'} = $fields[4];
+            $llamada{'AreaA'} = $fields[6];
+            $llamada{'NumeroA'} = $fields[7];
+            $llamada{'PaisB'} = $fields[8];
+            $llamada{'AreaB'} = $fields[9];
+            $llamada{'NumeroB'} = $fields[10];
+            $llamada{'FechaArchivo'} = $fields[11];
+            
+
+
+
+            # push (@todos, \%llamada);
+            push(@todos, hash_to_text(\%llamada));
+
+            # cargamos los hashes
+            add_if_exist_hash(\%porCentral, $llamada{'central'}, \%llamada);
+            add_if_exist_hash(\%porAgente, $llamada{'agente'}, \%llamada);
+            add_if_exist_hash(\%porUmbral, $llamada{'umbral'}, \%llamada);
+            add_if_exist_hash(\%porTipoLlamada, $llamada{'tipo_de_llamada'}, \%llamada);
+            add_if_exist_hash(\%porTiempoConv, $llamada{'tiempo_de_conv'}, \%llamada);
+            add_if_exist_hash(\%porNumerA, $llamada{'NumeroA'}, \%llamada);
+        }
+    }
+
+    # usamos los filtros
+    # say scalar @todos;
+    my @filtros = (
+        ['Central', \%porCentral],
+        ['Agente', \%porAgente],
+        ['umbral', \%porUmbral],
+        ['Tipo de llamada', \%porTipoLlamada],
+        ['NumeroA', \%porNumerA]
+    );
+
+    my @filtros_rankings = (
+        ['Central', \%porCentral, \%centrales],
+        ['Agente', \%porAgente, \%agentes_mail, \%agentes_oficina, \%agentes_id]
+
+    );
+
+    @potenciales = @todos;
+    if ($consulta){
+        say 'Empezamos por los filtros: ';
+        foreach my $filtro (@filtros ){
+        # Tipos de filtros:
+        #   Filtro por central (una, varias, todas)
+        #   Filtro por agente (uno, varios, todos)
+        #   Filtro por umbral (uno, varios, todos)
+        #   Filtro por tipo de llamada (una, varias, todas)
+        #   Filtro por numero A (área y numero de línea) (uno, varios, todos)
+
+            my @tupla = $filtro;
+            # say $tupla[0][1];
+            # $tupla[0][0] -> nombre
+            # $tupla[0][1] -> hash
+            my @filtros = elegir_filtro($tupla[0][0], $tupla[0][1]); # me da una lista de claves de has
+            
+            # sale_filtro = Todas las llamadas de esos filtros (hay repetidos);
+            my @sale_filtro = ();
+            foreach my $filtro (@filtros){
+                foreach my $llamadas ($tupla[0][1]{$filtro}){
+                    #say @{$llamada}[0];
+                    foreach my $llamadat (@{$llamadas}){
+                        push(@sale_filtro, hash_to_text($llamadat));
+                    }
+                    #if (not grep $_ equ $llamada }) { 
+                    #}
+                    # falta chequear duplicados
+                }
+            }
+
+            # foreach my $llamadat (@sale_filtro){
+            #     #say hash_to_text($llamadat);
+            #     say $llamadat;
+            # }
+
+            
+            # para cada potencia en potencial:
+            @salida = ();
+            # say 'entra a potenciales';
+            foreach my $llamada_potencia (@potenciales){
+            
+                # if (not grep $_ eq $archivo, @filtered_list ){
+                if (grep $_ eq $llamada_potencia, @sale_filtro){
+                    if (not grep $_ eq $llamada_potencia, @salida){
+                        push (@salida, $llamada_potencia);
+                        # say $llamada_potencia;
+                    }
+                }            #     sii está en salida en sale_filtro y no está en salida:
+            #         agregar en salida:
+                
+            }
+
+            @potenciales = @salida;
+            # si la salida está vacia -> warning la selección quedó vacía
+
+            #itero uno por uno y me fijo si está.
+
+        }
+
+        #   Filtro por tiempo de conversación (rango)
+
+        if ($write){
+            my $filename = get_new_filename($REPODIR);
+
+            # abrir archivo
+            open(my $fh, '>', catfile($REPODIR, $filename)) 
+            or die "No se pudo abrir el archivo $filename";
+
+            #escribir
+            say "escribo en $filename";
+            foreach my $llamadat (@potenciales){
+
+                print $fh ($llamadat . "\n");
+                # say $llamadat;
+                # <STDIN>
+                #say $llamadat;
+            }
+            close $fh;
+
+        } else {
+            @potenciales = sort @potenciales;
+            foreach my $llamadat (@potenciales){
+                # imprimir
+                say $llamadat;
+            }
+        }
+        #FIXME falta imprimir los potenciales
+
+    }
+
+    if ($stats){
+
+
+
+
+        # elegir el ranking, seleccionando filtros de @filtros
+        #FIXME necesitamos mas filtros, for real
+        my $ranking = elegir_ranking(@filtros_rankings);
+        say $ranking;
+
+        foreach my $filtro (@filtros_rankings){
+            #say @{$filtro};
+            my @tupla = $filtro;
+            say $tupla[0][0];
+            if ($tupla[0][0] eq $ranking){
+                #has analizar está en -> $tupla[0][1]
+                say 'eligio ' . $tupla[0][0];
+                my $hash_ = $tupla[0][1];
+                my @claves = keys %$hash_;
+                # @claves = sort { (scalar @{%$hash_{$a}}) cmp (scalar @{%$hash_{$b}}) } @claves;
+                my @temp = ();
+                foreach my $clave (@claves){
+                    push(@temp, [$clave, scalar @{%$hash_{$clave}}] );
+                    #say $clave . ' ' . scalar @{%$hash_{$clave}};
+                }
+                #FIXME ordenar por segundos tambien
+                @temp = sort {$b->[1] <=> $a->[1]} @temp;
+
+                say 'ordenadas';
+                foreach my $sorted_sorted (@temp){
+                    if ($tupla[0][0] eq 'Central') {
+                        say ${$tupla[0][2]}{$sorted_sorted->[0]} . ' (' . $sorted_sorted->[0] . '): ' . $sorted_sorted->[1];
+                    } elsif ($tupla[0][0] eq 'Agente'){
+                        # Mostar además del id del agente, el correo electrónico y la oficina a la que pertenece
+                        my $agente = $sorted_sorted->[0];
+                        say ${$tupla[0][4]}{$agente} . ' ' . ${$tupla[0][2]}{$agente} . ' ' . ${$tupla[0][3]}{$agente} . ' ' . $sorted_sorted->[1];
+                    }
+                }
+                #@claves = { $a cmp $b } sort @claves;
+            }
+        }
+
+        # agarrars el hash, ordenas las claves por cual tiene mas cantidades
+        # imprimis en orden, buscando los nombres de verdad 
+
+        # sort { $a cmp $b } @words;
+    }
+
+    say "    -\nEmpieza nueva consulta";
+}
+
+sub elegir_ranking {
+    my @lista_posibilidades = (@_);
+
+    my @opciones = ();
+
+    say 'Seleccionar Ranking a ejectuar, escribir en la consola las siguentes opciones: ';
+    foreach my $filtro (@lista_posibilidades){
+        #say @{$filtro};
+        my @tupla = $filtro;
+        push(@opciones, $tupla[0][0]);
+        print $tupla[0][0] . ', ';
+    }
+
+    say '';
+
+    while ($true) {
+        my @eligio = get_aniomes('Indique la elegida: ');
+        if (scalar @eligio != 1){
+            say 'Elija solo una opción';
+        } else {
+            my $opcion = $eligio[0];
+            # si la opción está en
+            # if (not grep $_ eq $archivo, @filtered_list ){
+            if (grep $_ eq $opcion, @opciones){
+                return $opcion;
+            }
+        }
+    }
+    # my $result = una_varias_todas();
+
+
+    
+    # if ($result eq (MYENUM)[VARIAS]) {
+    #     say 'A continuación opciones posibles: ';
+    #     foreach (@lista_posibilidades){
+    #         print $_.', ';
+    #     }
+    #     print "\n";
+    #     my @filtros = get_aniomes('Ingrese los filtros usando las opciones atenriores (separados por espacios): ');
+    #     return @filtros;
+    # } elsif (($result eq (MYENUM)[TODAS])) {
+    #     return @lista_posibilidades;
+    # }
+
+}
+
+sub get_new_filename {
+    my @candidates = get_archivos_carpetas($REPODIR);
+    my $max = -1;
+    foreach my $filename (@candidates){
+        say $filename;
+        if ($filename =~ s/subllamada\.(\d+)$//g){
+            #my $numero =~ s/[^0-9]//g;
+            my $numero = $1;
+            say 'numero '. $numero;
+            if ($numero > $max){
+                $max = $numero + 0;
+            }
+        }
+        # check if matches
+        # if matches -> keep track of maximum
+
+    }
+    return 'subllamada.' . ($max+1);
+}
+ 
+
+# cada uno de estos fultros va a ser un hash.
+# después aplicamos los filtros y metemos todo en un set. Y printiamos el set.
+
+# say "What is your name? ";
+# my $name = <STDIN>;
+# chomp $name;
+
+# say "Hello $name, how are you?";
+
+# Parse options (-h, -r, -w, -s)
+
+
+#FIXME ¿como pongo los varios filtros que me pida?
+
+# -h no puede tener otro comando
+# -r solo puede estar con -w
+# -s solo puede estar con -w
+
+# my $filename = "$MAEDIR/CdP.mae";
+
+# open(my $fh, '<:encoding(UTF-8)', $filename)
+#   or die "Could not open file '$filename' $!";
+ 
+# while (my $row = <$fh>) {
+#   chomp $row;
+#   print "$row\n";
+# }
+
