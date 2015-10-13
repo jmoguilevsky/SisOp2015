@@ -21,6 +21,7 @@ Lista de opciones pusibles:
 
     * -h:
         Imprime este mensaje de ayuda.
+
     * -r:
         El resultado subconjunto de registros de llamadas sospechosas que 
         resulta luego de la aplicación de los filtros. También puede usar como
@@ -35,13 +36,15 @@ Lista de opciones pusibles:
         filtros iguales, siempre queda el mas restrictivo.
 
     * -s:
-        Realiza estadisticas de sobre los archivos de entrada.
-
+        Realiza rankings de sobre los archivos de entrada. Usa los mismos
+        filtros para lso archivos que -r.
+        Algunos filtros también tienen la opción de ordenar por cantidad de 
+        llamadas o duración total.
 
     * -w:
         Esta flag se puede usar opcionalmente con las flags -h y -r.
-        Grabar el resultado en un archivo con nombre a elección, pero no
-        sobreescribir ningún resultado previo
+        Grabar el resultado en un archivo con nombre finalizado en número
+        incremental, para no sobreescribir ningún resultado previo.
 END_MESSAGE
 
 
@@ -366,14 +369,6 @@ sub elegir_filtro {
         return @lista_posibilidades;
     }
     
-    
-
-    # si varias () elegir
-
-    # si todas
-    #     retornar
-
-
 }
 
 
@@ -465,14 +460,25 @@ sub get_archivos_subllamadas {
 
     } elsif ($result eq (MYENUM)[TODAS]) {
         # NoFilter
-        say 'todas';     
-        return @archivos;
+        say 'todas';
+        foreach my $archivo (@archivos){
+
+        if ($archivo =~ "subllamada\.\\d+\\b"){
+            # agregamos solo los que pasan el filtro
+            # if (not grep $_ eq $archivo, @filtered_list ){
+            say $archivo;
+            push (@filtered_list, $archivo);
+
+            }
+            # say 'paso ' . $filtro . ' ' . $archivo;
+        }
+        return @filtered_list;
     }
 }
 
 sub get_filtro_tiempo {
     while ($true) {
-        print 'Ingrese \'f\' si desea ingresar filtro por tiempo ó \'t\' para seguir';
+        print 'Ingrese \'f\' si desea ingresar filtro por tiempo ó \'t\' para seguir: ';
         my @ingresa = get_aniomes('');
 
         if (scalar @ingresa == 1){
