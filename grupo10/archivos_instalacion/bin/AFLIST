@@ -122,7 +122,7 @@ if(exists($params{'-r'})) {
         
     } elsif (scalar (@ARGV) == 2) {
         if (exists($params{'-w'})) {
-            # body...
+            $consulta = 1;
             $write = 1;
         } else {
             error_parametros();
@@ -139,7 +139,7 @@ if(exists($params{'-r'})) {
         
     } elsif (scalar (@ARGV) == 2) {
         if (exists($params{'-w'})) {
-            # body...
+            $stats = 1;
             $write = 1;
         } else {
             error_parametros();
@@ -153,6 +153,7 @@ if(exists($params{'-r'})) {
 } else {
     error_parametros();
 }
+
 
 sub get_aniomes {
 
@@ -191,7 +192,7 @@ sub get_archivos_carpetas {
     # http://linuxpoison.blogspot.com.ar/2013/01/perl-script-reading-list-of-files-from.html
     my ($nombre_carpeta) = @_;
 
-    opendir(DIR, $nombre_carpeta) || die "Problem reading the dir. \n";
+    opendir(DIR, $nombre_carpeta) || die "Problema al abrir el directorio $nombre_carpeta\n";
 
     #@filelist = readdir(DIR);
     my @filelist = ();
@@ -383,7 +384,6 @@ sub hash_to_text {
 }
 
 while ($true) { # para hacer mas de una consulta
-
     if ($consulta){
 
         my @salida = ();
@@ -555,14 +555,55 @@ while ($true) { # para hacer mas de una consulta
         #   Filtro por tiempo de conversación (rango)
 
         #TODO: imprimir todas las llamadas
-        foreach my $llamadat (@potenciales){
-            #say hash_to_text($llamadat);
-            say $llamadat;
+        if ($write){
+            my $filename = get_new_filename($REPODIR);
+
+            open(my $fh, '>', catfile($REPODIR, $filename)) 
+            or die "No se pudo abrir el archivo $filename";
+
+
+
+            # abrir archivo
+            #escribir
+            say "escribo en $filename";
+            foreach my $llamadat (@potenciales){
+                #say hash_to_text($llamadat);
+                print $fh ($llamadat . "\n");
+                # say $llamadat;
+                # <STDIN>
+                #say $llamadat;
+            }
+
+        } else {
+            foreach my $llamadat (@potenciales){
+                say $llamadat;
+                
+            }
         }
 
         say "    -\nEmpieza nueva consulta";
     }
 
+}
+
+sub get_new_filename {
+    my @candidates = get_archivos_carpetas($REPODIR);
+    my $max = -1;
+    foreach my $filename (@candidates){
+        say $filename;
+        if ($filename =~ s/subllamada\.(\d+)$//g){
+            #my $numero =~ s/[^0-9]//g;
+            my $numero = $1;
+            say 'numero '. $numero;
+            if ($numero > $max){
+                $max = $numero + 0;
+            }
+        }
+        # check if matches
+        # if matches -> keep track of maximum
+
+    }
+    return 'subllamada.' . ($max+1);
 }
  
 
