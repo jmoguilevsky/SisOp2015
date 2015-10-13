@@ -6,7 +6,12 @@ use strict;
 use warnings;
 use File::Spec::Functions;
 
+#FIXME Agregar filtrar por rango
+#FIXME Permitir input de archivos de sub llamada
+#FIXME Mejorar ?
+#FIXME Sacar el Uno
 
+#NOTE chequear expresiones regulares viejas
 
 my $mensajeAyuda = <<'END_MESSAGE';
 Este es el mensaje de ayuda de AFLIST.pl.
@@ -32,7 +37,7 @@ Lista de opciones pusibles:
 
     * -w:
         Esta flag se puede usar opcionalmente con las flags -h y -r.
-        grabar el resultado en un archivo con nombre a elección, pero no
+        Grabar el resultado en un archivo con nombre a elección, pero no
         sobreescribir ningún resultado previo
 END_MESSAGE
 
@@ -338,7 +343,7 @@ sub elegir_filtro {
     my $nombre = shift;
     my $hash = shift;
 
-    my @lista_posibilidades = keys %$hash; #FIXME
+    my @lista_posibilidades = keys %$hash;
 
     say 'Seleccionar filtros por ' . $nombre;
 
@@ -384,115 +389,116 @@ sub hash_to_text {
 }
 
 while ($true) { # para hacer mas de una consulta
-    if ($consulta){
+    #NOTE Acá empezaba el if
+    #
 
-        my @salida = ();
-        my @potenciales;
-        my @archivos_filtros = get_archivos_carpetas($PROCDIR);
+    my @salida = ();
+    my @potenciales;
+    my @archivos_filtros = get_archivos_carpetas($PROCDIR);
+    
+    say "filtros por oficina";
+    @archivos_filtros = filtrar_oficina(@archivos_filtros);
+    say "Filtros por aniomes";
+    @archivos_filtros = filtrar(@archivos_filtros);
+
+    # @archivos_filtros = filtrar(@archivos_filtros);
+
+    if (scalar @archivos_filtros == 0){
+        say "Warning: La selección de filtros no dejó ningún archivo para consultar."
+    }
+
+    # foreach (@archivos_filtros){
+    #     say $_;
+    # }
+
+    # para cada línea
+    # Creamos los 6 hashes
+    my  %porCentral;
+    my  %porAgente;
+    my  %porUmbral;
+    my  %porTipoLlamada;
+    my  %porTiempoConv;
+    my  %porNumerA;
+    my @todos = ();
+
+    foreach my $archivo (@archivos_filtros){
+        # abrir el archivo
+        # iteramos y llenamos 5 ha
+        my $file = catfile($PROCDIR, $archivo);
+        say 'abrí archivo ' . $file;
         
-        say "filtros por oficina";
-        @archivos_filtros = filtrar_oficina(@archivos_filtros);
-        say "Filtros por aniomes";
-        @archivos_filtros = filtrar(@archivos_filtros);
+    # abrimos el archivo
+        open(my $data, '<', $file) or 
+        die "No se pudo abrir el arhcivo '$file' $!\n";
+        
 
-        # @archivos_filtros = filtrar(@archivos_filtros);
 
-        if (scalar @archivos_filtros == 0){
-            say "Warning: La selección de filtros no dejó ningún archivo para consultar."
-        }
+        while (my $line = <$data>) {
+            chomp $line;
 
-        # foreach (@archivos_filtros){
-        #     say $_;
-        # }
+            # separar líneas
+            my @fields = split ";" , $line;
+            #say '      linea';
 
-        # para cada línea
-        # Creamos los 6 hashes
-        my  %porCentral;
-        my  %porAgente;
-        my  %porUmbral;
-        my  %porTipoLlamada;
-        my  %porTiempoConv;
-        my  %porNumerA;
-        my @todos = ();
+            #say $fields[2];
 
-        foreach my $archivo (@archivos_filtros){
-            # abrir el archivo
-            # iteramos y llenamos 5 ha
-            my $file = catfile($PROCDIR, $archivo);
-            say 'abrí archivo ' . $file;
+            # modelamos la llamada
+            # 0centra
+            # 1algente
+            # 2idumbral
+            # 3Tipo de llamada
+            # 4Inicio de llamada
+            # 5Tiempo
+            # 6AreaA
+            # 7NumeroA
+            # 8PaisB
+            # 9AreaB
+            # 10NumeroB
+            # 11Fecha
+            my  %llamada;
+            $llamada{'central'} = $fields[0];
+            $llamada{'agente'} = $fields[1];
+            $llamada{'umbral'} = $fields[2];
+            $llamada{'tipo_de_llamada'} = $fields[3];
+            $llamada{'tiempo_de_conv'} = $fields[5];
+            $llamada{'NumeroA'} = $fields[6] . $fields[7];
             
-        # abrimos el archivo
-            open(my $data, '<', $file) or 
-            die "No se pudo abrir el arhcivo '$file' $!\n";
+            $llamada{'inicioLlamada'} = $fields[4];
+            $llamada{'AreaA'} = $fields[6];
+            $llamada{'NumeroA'} = $fields[7];
+            $llamada{'PaisB'} = $fields[8];
+            $llamada{'AreaB'} = $fields[9];
+            $llamada{'NumeroB'} = $fields[10];
+            $llamada{'FechaArchivo'} = $fields[11];
             
 
 
-            while (my $line = <$data>) {
-                chomp $line;
 
-                # separar líneas
-                my @fields = split ";" , $line;
-                #say '      linea';
+            # push (@todos, \%llamada);
+            push(@todos, hash_to_text(\%llamada));
 
-                #say $fields[2];
-
-                # modelamos la llamada
-                # 0centra
-                # 1algente
-                # 2idumbral
-                # 3Tipo de llamada
-                # 4Inicio de llamada
-                # 5Tiempo
-                # 6AreaA
-                # 7NumeroA
-                # 8PaisB
-                # 9AreaB
-                # 10NumeroB
-                # 11Fecha
-                my  %llamada;
-                $llamada{'central'} = $fields[0];
-                $llamada{'agente'} = $fields[1];
-                $llamada{'umbral'} = $fields[2];
-                $llamada{'tipo_de_llamada'} = $fields[3];
-                $llamada{'tiempo_de_conv'} = $fields[5];
-                $llamada{'NumeroA'} = $fields[6] . $fields[7];
-                
-                $llamada{'inicioLlamada'} = $fields[4];
-                $llamada{'AreaA'} = $fields[6];
-                $llamada{'NumeroA'} = $fields[7];
-                $llamada{'PaisB'} = $fields[8];
-                $llamada{'AreaB'} = $fields[9];
-                $llamada{'NumeroB'} = $fields[10];
-                $llamada{'FechaArchivo'} = $fields[11];
-                
-
-
-
-                # push (@todos, \%llamada);
-                push(@todos, hash_to_text(\%llamada));
-
-                # cargamos los hashes
-                add_if_exist_hash(\%porCentral, $llamada{'central'}, \%llamada);
-                add_if_exist_hash(\%porAgente, $llamada{'agente'}, \%llamada);
-                add_if_exist_hash(\%porUmbral, $llamada{'umbral'}, \%llamada);
-                add_if_exist_hash(\%porTipoLlamada, $llamada{'tipo_de_llamada'}, \%llamada);
-                add_if_exist_hash(\%porTiempoConv, $llamada{'tiempo_de_conv'}, \%llamada);
-                add_if_exist_hash(\%porNumerA, $llamada{'NumeroA'}, \%llamada);
-            }
+            # cargamos los hashes
+            add_if_exist_hash(\%porCentral, $llamada{'central'}, \%llamada);
+            add_if_exist_hash(\%porAgente, $llamada{'agente'}, \%llamada);
+            add_if_exist_hash(\%porUmbral, $llamada{'umbral'}, \%llamada);
+            add_if_exist_hash(\%porTipoLlamada, $llamada{'tipo_de_llamada'}, \%llamada);
+            add_if_exist_hash(\%porTiempoConv, $llamada{'tiempo_de_conv'}, \%llamada);
+            add_if_exist_hash(\%porNumerA, $llamada{'NumeroA'}, \%llamada);
         }
+    }
 
-        # usamos los filtros
-        # say scalar @todos;
-        my @filtros = (
-            ['Central', \%porCentral],
-            ['Agente', \%porAgente],
-            ['umbral', \%porUmbral],
-            ['Tipo de llamada', \%porTipoLlamada],
-            ['NumeroA', \%porNumerA]
-        );
+    # usamos los filtros
+    # say scalar @todos;
+    my @filtros = (
+        ['Central', \%porCentral],
+        ['Agente', \%porAgente],
+        ['umbral', \%porUmbral],
+        ['Tipo de llamada', \%porTipoLlamada],
+        ['NumeroA', \%porNumerA]
+    );
 
-        @potenciales = @todos;
-
+    @potenciales = @todos;
+    if ($consulta){
         say 'Empezamos por los filtros: ';
         foreach my $filtro (@filtros ){
         # Tipos de filtros:
@@ -508,7 +514,6 @@ while ($true) { # para hacer mas de una consulta
             # $tupla[0][1] -> hash
             my @filtros = elegir_filtro($tupla[0][0], $tupla[0][1]); # me da una lista de claves de has
             
-            #TODO
             # sale_filtro = Todas las llamadas de esos filtros (hay repetidos);
             my @sale_filtro = ();
             foreach my $filtro (@filtros){
@@ -519,7 +524,7 @@ while ($true) { # para hacer mas de una consulta
                     }
                     #if (not grep $_ equ $llamada }) { 
                     #}
-                    # falta chequear duplicados #FIXME
+                    # falta chequear duplicados
                 }
             }
 
@@ -547,37 +552,35 @@ while ($true) { # para hacer mas de una consulta
 
             @potenciales = @salida;
             # si la salida está vacia -> warning la selección quedó vacía
-            #TODO
 
             #itero uno por uno y me fijo si está.
 
         }
         #   Filtro por tiempo de conversación (rango)
 
-        #TODO: imprimir todas las llamadas
         if ($write){
             my $filename = get_new_filename($REPODIR);
 
+            # abrir archivo
             open(my $fh, '>', catfile($REPODIR, $filename)) 
             or die "No se pudo abrir el archivo $filename";
 
-
-
-            # abrir archivo
             #escribir
             say "escribo en $filename";
             foreach my $llamadat (@potenciales){
-                #say hash_to_text($llamadat);
+
                 print $fh ($llamadat . "\n");
                 # say $llamadat;
                 # <STDIN>
                 #say $llamadat;
             }
+            close $fh;
 
         } else {
+            @potenciales = sort @potenciales;
             foreach my $llamadat (@potenciales){
+                # imprimir
                 say $llamadat;
-                
             }
         }
 
