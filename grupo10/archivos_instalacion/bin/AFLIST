@@ -800,7 +800,7 @@ while ($true) { # para hacer mas de una consulta
         #   Filtro por tiempo de conversación (rango)
 
         if ($write){
-            my $filename = get_new_filename($REPODIR);
+            my $filename = get_new_filename('subllamada');
 
             # abrir archivo
             open(my $fh, '>', catfile($REPODIR, $filename)) 
@@ -830,14 +830,11 @@ while ($true) { # para hacer mas de una consulta
 
     if ($stats){
 
-
-
-
         # elegir el ranking, seleccionando filtros de @filtros
-        #FIXME necesitamos mas filtros, for real
         my $ranking = elegir_ranking(@filtros_rankings);
         say $ranking;
 
+        my @outs_write = ();
         my $pais;
         my $ciudad;
         foreach my $filtro (@filtros_rankings){
@@ -877,14 +874,15 @@ while ($true) { # para hacer mas de una consulta
                 #FIXME ordenar por segundos tambien
                 @temp = sort {$b->[1] <=> $a->[1]} @temp;
 
-                say 'ordenadas';
                 foreach my $sorted_sorted (@temp){
                     if ($tupla[0][0] eq 'Central') {
-                        say ${$tupla[0][2]}{$sorted_sorted->[0]} . ' (' . $sorted_sorted->[0] . '): ' . $sorted_sorted->[1];
+                        push(@outs_write, ${$tupla[0][2]}{$sorted_sorted->[0]} . ' (' . $sorted_sorted->[0] . '): ' . $sorted_sorted->[1]);
+                        #say ${$tupla[0][2]}{$sorted_sorted->[0]} . ' (' . $sorted_sorted->[0] . '): ' . $sorted_sorted->[1];
                     } elsif ($tupla[0][0] eq 'Agente'){
                         # Mostar además del id del agente, el correo electrónico y la oficina a la que pertenece
                         my $agente = $sorted_sorted->[0];
-                        say ${$tupla[0][4]}{$agente} . ' ' . ${$tupla[0][2]}{$agente} . ' ' . ${$tupla[0][3]}{$agente} . ' ' . $sorted_sorted->[1];
+                        #say ${$tupla[0][4]}{$agente} . ' ' . ${$tupla[0][2]}{$agente} . ' ' . ${$tupla[0][3]}{$agente} . ' ' . $sorted_sorted->[1];
+                        push(@outs_write, ${$tupla[0][4]}{$agente} . ' ' . ${$tupla[0][2]}{$agente} . ' ' . ${$tupla[0][3]}{$agente} . ' ' . $sorted_sorted->[1]);
                     } elsif ($tupla[0][0] eq 'Destino'){
                         my $lugar_;
                         if ($sorted_sorted->[2]){
@@ -901,11 +899,12 @@ while ($true) { # para hacer mas de una consulta
                             }
                             
                         }
-                        say $lugar_ . ' :' . $sorted_sorted->[1];
+                        # say $lugar_ . ' :' . $sorted_sorted->[1];
+                        push(@outs_write, $lugar_ . ' :' . $sorted_sorted->[1]);
                     } elsif ($tupla[0][0] eq 'Umbral'){
                         if ($sorted_sorted->[1] >1 ){
-                            say $sorted_sorted->[0] . ': ' . $sorted_sorted->[1];
-                            
+                            #say $sorted_sorted->[0] . ': ' . $sorted_sorted->[1];
+                            push(@outs_write, $sorted_sorted->[0] . ': ' . $sorted_sorted->[1]);
                         }
                     }
                     #TODO TIPOS de llamada
@@ -917,6 +916,34 @@ while ($true) { # para hacer mas de una consulta
         # imprimis en orden, buscando los nombres de verdad 
 
         # sort { $a cmp $b } @words;
+        if ($write){
+
+            # buscar archivo
+            my $myFile = get_new_filename('estadistica');
+            # abrir archivo
+            say 'nombre archivo '.$myFile;
+            open(my $fh, '>', catfile($REPODIR, $myFile)) 
+            or die "No se pudo abrir el archivo $myFile";
+
+            #escribir
+            # say "escribo en $filename";
+            foreach my $llamadat (@outs_write){
+
+                print $fh ($llamadat . "\n");
+                # say $llamadat;
+                # <STDIN>
+                #say $llamadat;
+            }
+            close $fh;
+            # escribir
+            #cerrar
+        } else {
+            #para cada línea
+            foreach my $line_print (@outs_write){
+                # imprimir
+                say $line_print;
+            }
+        }
     }
 
     say "    -\nEmpieza nueva consulta";
@@ -969,11 +996,12 @@ sub elegir_ranking {
 }
 
 sub get_new_filename {
+    my $name = shift;
     my @candidates = get_archivos_carpetas($REPODIR);
     my $max = -1;
     foreach my $filename (@candidates){
         # say $filename;
-        if ($filename =~ s/subllamada\.(\d+)$//g){
+        if ($filename =~ s/$name\.(\d+)$//g){
             #my $numero =~ s/[^0-9]//g;
             my $numero = $1;
             # say 'numero '. $numero;
@@ -985,7 +1013,7 @@ sub get_new_filename {
         # if matches -> keep track of maximum
 
     }
-    return 'subllamada.' . ($max+1);
+    return "$name." . ($max+1);
 }
  
 
