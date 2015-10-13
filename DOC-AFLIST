@@ -1,0 +1,35 @@
+Documentación técnica
+---------------------
+
+
+Modelado de datos
+-----------------
+Las llamadas se modelan con un hash, donde vada columna es representada por una clave.
+Todos los filtros se modelan como un hash, en el cual se utiliza como clave, el nombre de la columna a filtrar.
+
+Programa principal
+------------------
+Este verifica las opciones y realiza filtros sobre que archivo se van a abrir. Luego carga los datos en los hashes.
+En función de los filtros o rankings que establece el usuario, elimina las opciones que no corresponden. Y luego imprime por pantalla el resultado final ó lo exporta a un archivo con terminación numerada, para nunca pisar datos anteriores.
+
+El programa corre dentro de un bucle infinito, por lo cual se pueden realizar múltiples consultas (siempre con los mismos flags ingresados por consola). 
+
+Parseo de parámetros
+-------------------
+El programa aborta si se reciben mas parámetros de los necesarios, se usan dos parámetros que no tienen sentidos juntos (como -h y -w, por ejemplo).
+
+
+Funciones creadas
+-----------------
+
+add_if_exist_hash
+-----------------
+- Parámetros: Un hash, una clave (string) y un valor (también un hash)
+- Descripción: El primer hash está implementado con strings como claves y arrays de hashes como valor la funciónagrega el valor al array de la clave correscondiente y crea el array si este no existe
+- Valor de retorno: -
+
+get_new_filename
+----------------
+- Parámetros: Comienzo de archivo (string) y Path a un directorio (string)
+- Descripción: Busca el próximo posible archivo que comienza con Comienzo de Archivo y termina com .NNN, de tal forma que no se sobreescriba información.
+- Valor de retorno: El nuevo archivo posible a crear en el directorio indicado (string)
