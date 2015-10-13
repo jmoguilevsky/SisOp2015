@@ -33,7 +33,7 @@ function determinar_tipo_llamada(){
 		msg_ret="DDN"
 	elif [ ! "$3" ]; then
 		msg_ret="NULO"
-	elif grep -Fq "$3" "$CODIGOS_PAIS" && [ "$1" != "$2" ]; then
+	elif grep -Fqw "$3" "$CODIGOS_PAIS" && [ "$1" != "$2" ]; then
 		msg_ret="DDI"
 	else
 		msg_ret="NULO"
@@ -152,13 +152,27 @@ for i in $LLAMADAS_ORDENADAS; do
 
 		cantidad_procesados=$[cantidad_procesados + 1]
 		#verifico que existe el codigo de area del origen de la llamada
-		if grep -Fq "$area_a" "$CODIGOS_AREA"
+		if grep -Fqw "$area_a" "$CODIGOS_AREA"
 		then
-			#Calculo que tipo de llamada es
+			oficina=$(obtener_oficina "$id_agente")
+			concat=$area_a$linea_a
 			tipo_llamada=$(determinar_tipo_llamada "$area_a" "$area_b" "$pais_b" "$linea_b")
-			if [ "${tipo_llamada}" == 'NULO' ]; then
+			#Verifico la existencia de la oficina
+			if [ -z "$oficina" ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
-				rechazar_registro arr "El registro no concuerda con ningun tipo de llamada." "$base"
+				rechazar_registro arr "El registro no posee un id de agente valido." "$base"
+			#Verifico que el numero de origen sea valido
+			elif [ ${#concat} != 10 ]; then
+				cantidad_rechazados=$[cantidad_rechazados + 1]
+				rechazar_registro arr "El registro no posee un numero y codigo de origen validos (que sumen 10 caracteres)" "$base"
+			#Verifico que el tiempo sea un numero mayor o igual a cero
+			elif [ 0 -gt "$tiempo_conversacion" ]; then
+				cantidad_rechazados=$[cantidad_rechazados + 1]
+				rechazar_registro arr "El registro no posee un tiempo de conversacion mayor o igual a cero." "$base"
+			#Verifico que sea un tipo de llamada valido
+			elif [ "${tipo_llamada}" == 'NULO' ]; then
+				cantidad_rechazados=$[cantidad_rechazados + 1]
+				rechazar_registro arr "El registro no clasifica bajo ningun tipo de llamada o el destino no es valido." "$base"
 			else
 				#La llamada es valida, luego averiguo si tiene un umbral activo sobre ella.
 				umbral_tope=$(determinar_umbral_tope "$area_a" "$linea_a" "$tipo_llamada" "$area_b" "$pais_b")
@@ -173,7 +187,6 @@ for i in $LLAMADAS_ORDENADAS; do
 					if [ "$tope" -lt "$tiempo_conversacion" ]; then
 						#Es sospechosa, la guardo
 						cantidad_sospechosas=$[cantidad_sospechosas + 1]
-						oficina=$(obtener_oficina "$id_agente")
 						mes=${fecha:3:2}
 						anio=${fecha:6:4}
 						camp="$central;$id_agente;$id_umbral;$tipo_llamada;$fecha;$tiempo_conversacion;$area_a;$linea_a;$pais_b;$area_b;$linea_b;$fecha_input"
@@ -185,7 +198,7 @@ for i in $LLAMADAS_ORDENADAS; do
 				fi
 			fi
 		else
-			rechazar_registro arr "El codigo de area de origen no es valido" "$base"
+			rechazar_registro arr "El codigo de area de origen no es valido." "$base"
 			cantidad_rechazados=$[cantidad_rechazados + 1]
 		fi
 	done < "$i"
