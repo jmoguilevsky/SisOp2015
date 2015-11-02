@@ -5,7 +5,7 @@ INFO="INFO"
 WAR="WAR"
 ERR="ERR"
 
-CURRENT=$(date -u '+%F%T')
+CURRENT=$(date -u '+%F %T')
 LOGSTART=$CURRENT' '$USER' '$1
 
 if [ "$1" = "AFINSTAL.sh" -o "$1" = "AFINSTAL" ]

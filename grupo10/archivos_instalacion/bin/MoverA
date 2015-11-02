@@ -18,7 +18,7 @@ if [ $INICIALIZACION != true ]; then
 	exit 3
 fi
 
-ARCHIVO=$1
+ARCHIVO="$1"
 NOMBRE_BASE=${ARCHIVO##*/}
 #Veo si ya existe el archivo en el destino:
 if [ -f "$2/$NOMBRE_BASE" ]; then
@@ -29,14 +29,14 @@ if [ -f "$2/$NOMBRE_BASE" ]; then
 	if [ -f $NUEVO_PATH ]; then
 		#Lo copio en duplicados con el sufijo .nnn
 		CANTIDAD=$(ls -l $NUEVO_PATH* | wc -l)
-		mv $1 "$NUEVO_PATH.$CANTIDAD"
+		mv "$1" "$NUEVO_PATH.$CANTIDAD"
 		if [ ! -z "$3" ]; then
 			# GraLog MoverA "El archivo $1 ya existia en la carpeta $2 y en duplicados. Se lo guardo con .$CANTIDAD" WAR
 			echo "El archivo $1 ya existia en la carpeta $2 y en duplicados. Se lo guarda alli con el sufijo .$CANTIDAD"
 		fi
 	else
 		#Lo copio en duplicados con su nombre original
-		mv $1 $NUEVO_PATH
+		mv "$1" $NUEVO_PATH
 		if [ ! -z "$3" ]; then
 			# GraLog MoverA "No existe en duplicados, se guarda alli con su nombre original." WAR
 			echo "El archivo $1 ya existia en $2, pero no en duplicados, se guarda alli con su nombre original."
@@ -44,7 +44,7 @@ if [ -f "$2/$NOMBRE_BASE" ]; then
 	fi
 else
 	#El archivo no existia, lo muevo normalmente
-	mv $1 $2
+	mv "$1" $2
 	if [ ! -z "$3" ]; then
 		# GraLog MoverA "Archivo movido con exito." INFO
 		echo "Archivo movido con exito."

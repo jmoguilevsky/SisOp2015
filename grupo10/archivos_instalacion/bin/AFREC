@@ -66,19 +66,27 @@ function moverArchivos {
 		./MoverA "$NOVEDIR/$FILE" "$ACEPDIR"
 		./GraLog "AFREC" "Archivo $FILE aceptado, movido a $ACEPDIR/$FILE." "INFO" 
 	done
+	OLD_IFS=$IFS
+	IFS=$'\n'
 	for FILE in ${RECHAZADOS[*]}
 	do
 		./MoverA "$NOVEDIR/$FILE" "$RECHDIR"
 	done
-
+	IFS=$OLD_IFS
 }
 
 function checkFiles {
-	FILE_LIST=( $(ls -A $NOVEDIR) )
+	FILE_LIST=$(ls -A -1 "$NOVEDIR") 
 	ACEPTADOS=()
 	RECHAZADOS=()
-	for FILE in ${FILE_LIST[*]}
+	OLD_IFS=$IFS
+	IFS=$'\n'
+	for FILE in ${FILE_LIST[@]}
 	do
+		if [ "$FILE" = "" ]
+		then
+			continue
+		fi		
 		checkfile "$FILE"
 		FILE_OK=$?
 		if (( FILE_OK ))
@@ -88,7 +96,7 @@ function checkFiles {
 			RECHAZADOS+=($FILE)
 		fi
 	done
-	
+	IFS=$OLD_IFS
 }
 
 function main {
@@ -101,7 +109,7 @@ function main {
 
 	moverArchivos
 
-	PENDIENTES=( $(ls -A $ACEPDIR) )
+	PENDIENTES=( $(ls -A -1 "$ACEPDIR") )
 	if (( ${#PENDIENTES[@]} ))
 	then
 		ID=$(pidof -x "AFUMB")
