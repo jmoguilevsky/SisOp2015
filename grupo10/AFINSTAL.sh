@@ -120,7 +120,7 @@ function verificarConf(){
 	if [ -d "$MAEDIR" ]; then
 		log "Directorio de Maestros y Tablas: $MAEDIR"
 		log "Archivos existentes:"
-		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if existeArchivo "$aux"; then
 				log "$aux"
@@ -134,7 +134,7 @@ function verificarConf(){
 		completa=false
 		faltantes[$j]="$MAEDIR"
 		j=$((j+1))
-		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 				faltantes[$j]="$aux"
 				j=$((j+1))
@@ -248,7 +248,7 @@ function completarConf(){
 	############################ MAEDIR #############################
 
 	if [ -d "$MAEDIR" ]; then
-		for i in "$GRUPO/archivos_instalacion/mae"/*.{csv,mae,tab};do
+		for i in "$GRUPO/archivos_instalacion/mae"/*.{mae,tab};do
 			aux="$MAEDIR/$(quitarRaizDir "$i")"
 			if ! existeArchivo "$aux"; then
 				mover "$i" "$MAEDIR"
@@ -256,7 +256,6 @@ function completarConf(){
 		done
 	else
 		mkdir "$MAEDIR"
-		copiarConExtension "$GRUPO/archivos_instalacion/mae" "csv" "$MAEDIR"
 		copiarConExtension "$GRUPO/archivos_instalacion/mae" "mae" "$MAEDIR"
 		copiarConExtension "$GRUPO/archivos_instalacion/mae" "tab" "$MAEDIR"
 	fi
@@ -600,7 +599,6 @@ function moverArchivos(){
     fi
 	log "Instalando Archivos Maestros y Tablas"
     if [ ! "$GRUPO/archivos_instalacion/mae" == "$GRUPO$MAEDIR" ]; then
-        copiarConExtension "$GRUPO/archivos_instalacion/mae" "csv" "$GRUPO$MAEDIR"
         copiarConExtension "$GRUPO/archivos_instalacion/mae" "mae" "$GRUPO$MAEDIR"
         copiarConExtension "$GRUPO/archivos_instalacion/mae" "tab" "$GRUPO$MAEDIR"
     fi
