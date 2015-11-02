@@ -4,10 +4,15 @@
 use 5.010;
 use strict;
 use warnings;
+
 use File::Spec::Functions;
+use Scalar::Util qw(looks_like_number);
 
 
 #FIXME Agregar filtrar por rango
+
+my $code_rojo = "\x1b[31m";
+my $code_negro = "\x1b[0m";
 
 
 my $mensajeAyuda = <<'END_MESSAGE';
@@ -15,8 +20,11 @@ Este es el mensaje de ayuda de AFLIST.pl.
 Para salir de programa utilize Ctrl + C
 
 Para obtener los archivos necesarios, siempre se utilizan los dirctorios
-establecidos en las variables de entorno $PROCDIR $REPODIR $MAEDIR
+establecidos en las variables de entorno $PROCDIR $REPODIR $MAEDIR.
 
+En caso de encontrarse llamadas repetidas en los archivos de llamadas
+sospechosas, se filtraran y se tomarán en cuenta solo una vez
+.
 Lista de opciones pusibles:
 
     * -h:
@@ -77,7 +85,7 @@ sub una_varias_todas {
     my $succes;
 
     while ($true) {
-        print 'varia ó todas (ingrese la primera letra): ';
+        print "\t".'Varias ó Todas (ingrese la primera letra): ';
 
         my $in = readline(*STDIN);
 
@@ -88,17 +96,16 @@ sub una_varias_todas {
             # say $options[0];
 
             if (scalar @options != 1){
-                say 'Solo una opción es posible.';
+                say "\t".$code_rojo.'Solo una opción es posible.'.$code_negro;
             } else {
                 $options[0] = lc $options[0];
-                if ($options[0] eq 'u'){
-                    return (MYENUM)[UNA];
-                } elsif ($options[0] eq 'v') {
+                if ($options[0] eq 'v') {
                     return (MYENUM)[VARIAS];
                 } elsif ($options[0] eq 't') {
                     return (MYENUM)[TODAS];
                 }
-            }            
+            }
+            say "\t".$code_rojo.'Selecione una opción válida'.$code_negro;
         } else {
             say '';
             say 'Debe ingresar por lo menos un caracter';
@@ -232,13 +239,7 @@ sub filtrar {
 
     my @filtered_list = ();
 
-    if ($result eq (MYENUM)[UNA]){
-        say 'una, no debería existir esto, es lo mismo que varias';
-        
-        get_aniomes(); # pedimos solo una
-        # pido un anio mes
-
-    } elsif ($result eq (MYENUM)[VARIAS]) {
+    if ($result eq (MYENUM)[VARIAS]) {
         say 'varias'; # pedimos mas de una
         # pido un anio mes anio mes anio mes ...
         my @filtros = get_aniomes('Ingrese los filtros como aniomes (separados por espacios): ');
@@ -266,7 +267,7 @@ sub filtrar {
 
     } elsif ($result eq (MYENUM)[TODAS]) {
         # NoFilter
-        say 'todas';     
+        # say 'todas';     
         return @archivos;
     }
 }
@@ -312,25 +313,17 @@ sub filtrar_oficina {
 
     } elsif ($result eq (MYENUM)[TODAS]) {
         # NoFilter
-        say 'todas';     
+        #say 'todas';     
         return @archivos;
     }
 }
 
 sub add_if_exist_hash {
-    # variables
-    # my ($hash, $key, $value) = (@_);
-    #my %hash = %{shift()};
+
     my $hash = shift;
     my $key = shift;
     my %value = %{shift()};
     
-    # if (not value in hash){
-    #     $hash{} = array
-    # }
-
-    # my $incoming_hash_ref = shift;
-    # $incoming_hash_ref->{'e'} = 'f';
     
     if (not exists $hash->{$key}){
         $hash->{$key} = [];
@@ -352,7 +345,7 @@ sub elegir_filtro {
 
     my @lista_posibilidades = keys %$hash;
 
-    say 'Seleccionar filtros por ' . $nombre;
+    say 'Seleccionar filtros por ' . (ucfirst $nombre);
 
     my $result = una_varias_todas();
 
@@ -392,7 +385,7 @@ sub hash_to_text {
 sub subllamadas_archivos {
 
     while ($true) {
-        say 'Presiones \'s\' para subllamadas ó \'o\' para archivos de oficinas';
+        print 'Presiones \'s\' para subllamadas ó \'o\' para archivos de oficinas: ';
         my $in = readline(*STDIN);
 
         if ($in){
@@ -410,8 +403,9 @@ sub subllamadas_archivos {
                 }
             }         
         }
-        say 'Debe ingresar por lo menos un caracter y solo una opción';
-       
+        print $code_rojo;
+        say "\t".'Debe ingresar por lo menos un caracter y solo una opción válida';
+        print $code_negro;       
 
     }
     # body...
@@ -605,9 +599,9 @@ while ($true) { # para hacer mas de una consulta
     } else {
         @archivos_filtros = get_archivos_carpetas($PROCDIR);
         
-        say "filtros por oficina";
+        say "Seleccionar filtros por Oficina:";
         @archivos_filtros = filtrar_oficina(@archivos_filtros);
-        say "Filtros por aniomes";
+        say "Seleccionar filtros por Aniomes:";
         @archivos_filtros = filtrar(@archivos_filtros);
 
         $directorio = $PROCDIR;
