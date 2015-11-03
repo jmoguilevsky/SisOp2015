@@ -123,14 +123,14 @@ for i in $LLAMADAS_ORDENADAS; do
 	primer_linea=$(head -1 $i | grep '.*;.*;.*;.*;.*;.*;.*;.*$' )
 	if [ -z "$primer_linea" ]; then
 		log "Se RECHAZA el archivo $i porque su estructura no se corresponde con el formato esperado." WAR
-		. MoverA $ACEPDIR/$base $RECHDIR
+		MoverA $i $RECHDIR
 		continue
 	fi
 	#Checkear si el archivo esta duplicado
 	base=$(basename "$i")
 	if [ -f $PROCDIR/$base ]; then
 		log "Se rechaza el archivo $base por estar DUPLICADO" WAR
-		. MoverA $ACEPDIR/$base $RECHDIR
+		MoverA $ACEPDIR/$base $RECHDIR
 		continue
 	fi
 	#Obtengo el nombre de la central
@@ -156,11 +156,9 @@ for i in $LLAMADAS_ORDENADAS; do
 		pais_b=${arr[5]}
 		area_b=${arr[6]}
 		linea_b=${arr[7]}
-
 		cantidad_procesados=$[cantidad_procesados + 1]
 		#verifico que existe el codigo de area del origen de la llamada
-		if grep -Fqw "$area_a" "$CODIGOS_AREA"
-		then
+		if grep -Fqw "$area_a" "$CODIGOS_AREA"; then
 			oficina=$(obtener_oficina "$id_agente")
 			concat=$area_a$linea_a
 			tipo_llamada=$(determinar_tipo_llamada "$area_a" "$area_b" "$pais_b" "$linea_b")
@@ -168,26 +166,32 @@ for i in $LLAMADAS_ORDENADAS; do
 			if [ -z "$oficina" ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no posee un id de agente valido." "$base"
+				continue
 			#Verifico que el numero de origen sea valido
 			elif [ ${#concat} != 10 ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no posee un numero y codigo de origen validos (que sumen 10 caracteres)" "$base"
+				continue
 			#Verifico que el tiempo sea un numero mayor o igual a cero
 			elif [ 0 -gt "$tiempo_conversacion" ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no posee un tiempo de conversacion mayor o igual a cero." "$base"
+				continue
 			#Verifico que existe solo codigo de area_b o solo codigo de pais_b
 			elif [ -z "$area_b" ] && [ -z "$pais_b" ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no posee ninguno de los codigos de destino." "$base"
+				continue
 			#Verifico que no existan los dos codigos de destino al mismo tiempo
 			elif [ ! -z "$area_b" ] && [ ! -z "$pais_b" ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro es invalido por poseer tanto codigo de area como de pais." "$base"
+				continue
 			#Verifico que sea un tipo de llamada valido
 			elif [ "${tipo_llamada}" == 'NULO' ]; then
 				cantidad_rechazados=$[cantidad_rechazados + 1]
 				rechazar_registro arr "El registro no clasifica bajo ningun tipo de llamada o el destino no es valido." "$base"
+				continue
 			else
 				#La llamada es valida, luego averiguo si tiene un umbral activo sobre ella.
 				umbral_tope=$(determinar_umbral_tope "$area_a" "$linea_a" "$tipo_llamada" "$area_b" "$pais_b")
@@ -215,6 +219,7 @@ for i in $LLAMADAS_ORDENADAS; do
 		else
 			rechazar_registro arr "El codigo de area de origen no es valido." "$base"
 			cantidad_rechazados=$[cantidad_rechazados + 1]
+			continue
 		fi
 	done < "$i"
 	mkdir -p  "$PROCDIR/proc"
