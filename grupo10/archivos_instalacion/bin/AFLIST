@@ -306,7 +306,7 @@ sub filtrar_oficina {
         # pido un anio mes
 
     } elsif ($result eq (MYENUM)[VARIAS]) {
-        say 'varias'; # pedimos mas de una
+        #say 'varias'; # pedimos mas de una
         # pido un anio mes anio mes anio mes ...
         my @filtros = get_aniomes('Ingrese los filtros como oficina (separados por espacios): ');
         
@@ -362,7 +362,7 @@ sub elegir_filtro {
 
     my @lista_posibilidades = keys %$hash;
 
-    say 'Seleccionar filtros por ' . (ucfirst $nombre);
+    say 'Seleccionar filtros por ' . (ucfirst $nombre).':';
 
     my $result = una_varias_todas();
 
@@ -1036,6 +1036,7 @@ sub elegir_ranking {
                 return $opcion;
             }
         }
+        say $code_rojo."\t".'Elegir una opción válida.'.$code_negro;
     }
     # my $result = una_varias_todas();
 
