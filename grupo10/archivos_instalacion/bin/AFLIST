@@ -366,19 +366,42 @@ sub elegir_filtro {
 
     my $result = una_varias_todas();
 
+    while ($true){
+        #my @temp_posibilidades_lower = ();
 
-    if ($result eq (MYENUM)[VARIAS]) {
-        say 'A continuación opciones posibles: ';
-        foreach (@lista_posibilidades){
-            print $_.', ';
+        if ($result eq (MYENUM)[VARIAS]) {
+            say 'A continuación opciones posibles: ';
+            foreach (@lista_posibilidades){
+                print $_.', ';
+                #push(@temp_posibilidades_lower, lc $_)
+            }
+            print "\n";
+            my @filtros = get_aniomes('Ingrese los filtros usando las opciones atenriores (separados por espacios): ');
+
+            my $salida_valida = $false;
+            foreach my $filtro_ingresado (@filtros){
+                if (grep {$_ eq $filtro_ingresado} @lista_posibilidades){
+                    $salida_valida = $true;
+                } else {
+                    $salida_valida = $false;
+                    last;
+                }
+                #si filtro no está en temp_posibilidades_lower
+                    #error, break
+
+            }
+
+            if ($salida_valida){
+                return @filtros;
+                
+            } else {
+                say $code_rojo."\t".'Debe ingresar opciones válidas'.$code_negro;
+                say $code_rojo."\t".'Recuerde respetar mayúsuculas'.$code_negro;
+            }
+        } elsif (($result eq (MYENUM)[TODAS])) {
+            return @lista_posibilidades;
         }
-        print "\n";
-        my @filtros = get_aniomes('Ingrese los filtros usando las opciones atenriores (separados por espacios): ');
-        return @filtros;
-    } elsif (($result eq (MYENUM)[TODAS])) {
-        return @lista_posibilidades;
     }
-    
 }
 
 
@@ -767,6 +790,12 @@ while ($true) { # para hacer mas de una consulta
             # $tupla[0][0] -> nombre
             # $tupla[0][1] -> hash
             my @filtros = elegir_filtro($tupla[0][0], $tupla[0][1]); # me da una lista de claves de has
+
+
+            # if ($filtro eq 'NumeroA' or $filtro eq 'NumeroB'){
+
+            #     say 'pediste un filtro de NumeroA ó NumeroB';
+            # }
             
             # sale_filtro = Todas las llamadas de esos filtros (hay repetidos);
             my @sale_filtro = ();
@@ -776,17 +805,8 @@ while ($true) { # para hacer mas de una consulta
                     foreach my $llamadat (@{$llamadas}){
                         push(@sale_filtro, hash_to_text($llamadat));
                     }
-                    #if (not grep $_ equ $llamada }) { 
-                    #}
-                    # falta chequear duplicados
                 }
             }
-
-            # foreach my $llamadat (@sale_filtro){
-            #     #say hash_to_text($llamadat);
-            #     say $llamadat;
-            # }
-
             
             # para cada potencia en potencial:
             @salida = ();
