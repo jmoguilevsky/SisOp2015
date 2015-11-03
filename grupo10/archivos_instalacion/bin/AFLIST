@@ -240,31 +240,48 @@ sub filtrar {
     my @filtered_list = ();
 
     if ($result eq (MYENUM)[VARIAS]) {
-        say 'varias'; # pedimos mas de una
+        #say 'varias'; # pedimos mas de una
         # pido un anio mes anio mes anio mes ...
-        my @filtros = get_aniomes('Ingrese los filtros como aniomes (separados por espacios): ');
-        
-        # my $archivo; my $filtro;
-        foreach my $archivo (@archivos){
+        while ($true){
+            my @filtros = get_aniomes('Ingrese los filtros como aniomes (separados por espacios): ');
+
+            my $numero_valido = $true;
             foreach my $filtro (@filtros){
-                # say $filtro . ' ' . $archivo;
-                #if ($archivo =~ '\w*_'.$filtro.'\$'){
-                if ($archivo =~ "\\w*_$filtro\$"){
-                    # agregamos solo los que pasan el filtro
-                    # if (not exists($filtered_list{$archivo}) {
-
-                    # }
-                    if (not grep $_ eq $archivo, @filtered_list ){
-                        push (@filtered_list, $archivo);
-
-                    }
-
-                    # say 'paso' . $filtro . ' ' . $archivo;
+                #if (looks_like_number($filtro) and scalar $filtro == 6 and 
+                    
+                if (looks_like_number($filtro) and length $filtro == 6 and    
+                    $filtro % 100 > 0 and $filtro % 100 < 13){
+                } else {
+                    $numero_valido = $false;
+                    last;
                 }
             }
-        }
-        return @filtered_list;
 
+            if ($numero_valido){
+                # my $archivo; my $filtro;
+                foreach my $archivo (@archivos){
+                    foreach my $filtro (@filtros){
+                        # say $filtro . ' ' . $archivo;
+                        #if ($archivo =~ '\w*_'.$filtro.'\$'){
+                        if ($archivo =~ "\\w*_$filtro\$"){
+                            # agregamos solo los que pasan el filtro
+                            # if (not exists($filtered_list{$archivo}) {
+
+                            # }
+                            if (not grep $_ eq $archivo, @filtered_list ){
+                                push (@filtered_list, $archivo);
+
+                            }
+
+                            # say 'paso' . $filtro . ' ' . $archivo;
+                        }
+                    }
+                }
+                return @filtered_list;
+            } else {
+                say $code_rojo."\t".'Debe ingresar un número de 6 dígitos y los últimos 2 digitos deben estar entre 1 y 12'.$code_negro;
+            }
+        }
     } elsif ($result eq (MYENUM)[TODAS]) {
         # NoFilter
         # say 'todas';     
@@ -428,29 +445,44 @@ sub get_archivos_subllamadas {
         # pido un anio mes
 
     } elsif ($result eq (MYENUM)[VARIAS]) {
-        say 'varias'; # pedimos mas de una
+        #say 'varias'; # pedimos mas de una
         # pido un anio mes anio mes anio mes ...
-        my @filtros = get_aniomes('Ingrese el número subllamada.NNN: ');
-        
-        # my $archivo; my $filtro;
-        foreach my $archivo (@archivos){
+        while ($true){
+            my @filtros = get_aniomes('Ingrese el número subllamada.NNN: ');
+            
+            # si el filtro es válido
+            my $es_numero = $false;
+    
             foreach my $filtro (@filtros){
-                # say $filtro . ' ' . $archivo;
-                #say '/\w*'."$filtro".'_\d+\b';
-                #if ($archivo =~ "$filtro".'_\d+\b'){
-                # say $archivo;
-                if ($archivo =~ "subllamada\.$filtro\\b"){
-                    # agregamos solo los que pasan el filtro
-                    if (not grep $_ eq $archivo, @filtered_list ){
-                        say $archivo;
-                        push (@filtered_list, $archivo);
-
-                    }
-                    # say 'paso ' . $filtro . ' ' . $archivo;
+                if (looks_like_number($filtro)){
+                    $es_numero = $true;
                 }
             }
+    
+            if ($es_numero){
+            # my $archivo; my $filtro;
+                foreach my $archivo (@archivos){
+                    foreach my $filtro (@filtros){
+                        # say $filtro . ' ' . $archivo;
+                        #say '/\w*'."$filtro".'_\d+\b';
+                        #if ($archivo =~ "$filtro".'_\d+\b'){
+                        # say $archivo;
+                        if ($archivo =~ "subllamada\.$filtro\\b"){
+                            # agregamos solo los que pasan el filtro
+                            if (not grep $_ eq $archivo, @filtered_list ){
+                                say $archivo;
+                                push (@filtered_list, $archivo);
+    
+                            }
+                            # say 'paso ' . $filtro . ' ' . $archivo;
+                        }
+                    }
+                }
+                return @filtered_list;
+            } else {
+                say $code_rojo."\t".'Ingresar un número'.$code_negro;
+            }
         }
-        return @filtered_list;
 
     } elsif ($result eq (MYENUM)[TODAS]) {
         # NoFilter
