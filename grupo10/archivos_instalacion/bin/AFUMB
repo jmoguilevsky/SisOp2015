@@ -128,7 +128,7 @@ for i in $LLAMADAS_ORDENADAS; do
 	fi
 	#Checkear si el archivo esta duplicado
 	base=$(basename "$i")
-	if [ -f $PROCDIR/$base ]; then
+	if [ -f "$PROCDIR/proc/$base" ]; then
 		log "Se rechaza el archivo $base por estar DUPLICADO" WAR
 		MoverA $ACEPDIR/$base $RECHDIR
 		continue
@@ -138,13 +138,14 @@ for i in $LLAMADAS_ORDENADAS; do
 	central="${arr_centrales[0]}"
 	aux="${arr_centrales[1]}"
 	fecha_input=${aux:0:8}
-	#Itero el archivo registro por registro validandolos:
+	#Inicializo variables
 	cantidad_rechazados=0
 	cantidad_procesados=0
 	cantidad_con_umbral=0
 	cantidad_sin_umbral=0
 	cantidad_sospechosas=0
 	cantidad_no_sospechosas=0
+	#Itero el archivo registro por registro validandolos:
 	log "Archivo a procesar: $base" "INFO"
 	while IFS='' read -r line || [[ -n "$line" ]]; do
 		IFS=';' read -a arr <<< "$line"
