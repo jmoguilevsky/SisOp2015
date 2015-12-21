@@ -1,3 +1,4 @@
 # SisOp2015
 
-agregar codigos de retorno exit 0 si fue con exito, sino otro numero
+Trabajo Práctico de lamateria Sistemas Operativos - Facultad de Ingeniería - Universidad de Buenos Aires
+2do Cuatrimestre del 2015
